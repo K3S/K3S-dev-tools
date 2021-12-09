@@ -1,0 +1,126 @@
+<?php
+/** @var $form GenerateSqlFileForGithubIssueForm */
+/** @var $output string */
+
+/** @var Textarea $objectsElement */
+
+use Application\Form\GenerateSqlFileForGithubIssueForm;
+use Laminas\Form\Element\Submit;
+use Laminas\Form\Element\Text;
+use Laminas\Form\Element\Textarea;
+
+$objectsElement = $form->get(GenerateSqlFileForGithubIssueForm::OBJECTS_ELEMENT_NAME);
+
+/** @var Text $developmentLibraryElement */
+$developmentLibraryElement = $form->get(GenerateSqlFileForGithubIssueForm::DEV_LIBRARY_ELEMENT_NAME);
+
+$developmentSourceFileElement = $form->get(GenerateSqlFileForGithubIssueForm::SOURCE_FILE_ELEMENT_NAME);
+
+/** @var Submit $submitButton */
+$submitButton = $form->get('submit');
+?>
+
+<form id="buildForm">
+
+    <h4>Copy Source Members to Development</h4>
+
+    <!-- Source members to edit -->
+    <div class="mb-3">
+        <label for="sourceMembers" class="form-label">Source members to edit</label>
+        <textarea class="form-control" cols="20" rows="10" id="sourceMembers"></textarea>
+    </div>
+    <button type="button" class="btn btn-primary" id="getDependenciesButton">Get Dependencies</button>
+
+    <!-- Dependencies -->
+    <div class="mb-3">
+        <label for="dependencies" class="form-label">Dependencies</label>
+        <textarea class="form-control" cols="20" rows="10" id="dependencies"></textarea>
+    </div>
+    <button type="button" class="btn btn-danger" id="copyFromDeploymentToDevelopmentButton">Copy from deployment to development</button>
+
+
+    <h4>Compile in Development</h4>
+
+    <!-- Source members to compile -->
+    <div class="mb-3">
+        <label for="sourceMembersToCompile" class="form-label">Source members to compile</label>
+        <textarea class="form-control" cols="20" rows="10" id="sourceMembersToCompile"></textarea>
+    </div>
+    <button type="button" class="btn btn-primary">Compile</button>
+
+
+    <h4>Promote to Testing</h4>
+    <!-- Source members to promote -->
+    <div class="mb-3">
+        <label for="sourceMembersToPromoteToTesting" class="form-label">Source members to promote to testing</label>
+        <textarea class="form-control" cols="20" rows="10" id="sourceMembersToPromoteToTesting"></textarea>
+    </div>
+    <button type="button" class="btn btn-primary">Promote and Compile</button>
+
+
+    <h4>Promote to Deployment</h4>
+    <!-- Source members to promote -->
+    <div class="mb-3">
+        <label for="sourceMembersToPromoteToDeployment" class="form-label">Source members to promote to deployment</label>
+        <textarea class="form-control" cols="20" rows="10" id="sourceMembersToPromoteToDeployment"></textarea>
+    </div>
+    <button type="button" class="btn btn-primary">Promote and Compile</button>
+
+
+    <h4>Hotfix</h4>
+    <!-- Source members to include -->
+    <div class="mb-3">
+        <label for="sourceMembersToInclude" class="form-label">Source members to include</label>
+        <textarea class="form-control" cols="20" rows="10" id="sourceMembersToInclude"></textarea>
+    </div>
+    <button type="button" class="btn btn-primary">Build save file and upload to FTP site</button>
+
+    <h4>Send debug version to Leno</h4>
+    <!-- Source members to debug -->
+    <div class="mb-3">
+        <label for="sourceMembersToDebug" class="form-label">Source members to debug</label>
+        <textarea class="form-control" cols="20" rows="10" id="sourceMembersToDebug"></textarea>
+    </div>
+    <button type="button" class="btn btn-info">Compile with debug view and transfer to Leno</button>
+</form>
+
+<?php
+$this->inlineScript()->captureStart();
+echo <<<JS
+    $(document).ready(function() {
+        
+        // Get Dependencies
+        $('#getDependenciesButton').on('click', function () {
+            $.ajax({
+                url: '/get-object-dependencies',
+                dataType: 'json',
+                type: 'GET',
+                data: {
+                    sourceMembers: $('#sourceMembers').val()
+                }
+            }).done(function (response) {
+                $('#dependencies').val(response.dependencies[0]);
+            });
+
+        });
+        
+        // Copy from deployment to development
+        $('#copyFromDeploymentToDevelopmentButton').on('click', function () {
+            $.ajax({
+                url: '/copy-from-deployment-to-development',
+                dataType: 'json',
+                type: 'POST',
+                data: {
+                    sourceMembers: $('#dependencies').val()
+                }
+            }).done(function (response) {
+                alert('I think it was copied...');
+            })
+        })
+        
+        
+        // 
+    });
+JS;
+$this->inlineScript()->captureEnd();
+?>

@@ -1,0 +1,46 @@
+<?php
+/** @var Laminas\View\Renderer\PhpRenderer $this */
+
+// todo: Convert this to a partial loop
+use Laminas\View\Renderer\PhpRenderer;
+
+/** @var $this PhpRenderer */
+echo $this->doctype();
+?>
+<!--[if IE 8]><html class="ie8 no-js" lang="en"><![endif]-->
+<!--[if IE 9]><html class="ie9 no-js" lang="en"><![endif]-->
+<!--[if !IE]><!-->
+<html class="no-js">
+<!--<![endif]-->
+<head>
+    <link rel="shortcut icon" href="favicon.ico" />
+    <meta charset="utf-8">
+    <?= $this->headTitle('Chuk Tools')->setAutoEscape(false) ?>
+
+    <?= $this->headMeta()->appendName('viewPort', 'width=device-width, initial-scale=1.0') ?>
+</head>
+<body>
+<!-- Navigation -->
+<div class="navbar navbar-inverse navbar-fixed-top">
+    <div class="container">
+        <div class="navbar-header">
+            <!-- start: LOGO -->
+            <a class="navbar-brand" href="<?= $this->escapeHtmlAttr($this->url('homepage')) ?>">
+                Chuk Tools
+            </a>
+            <!-- end: LOGO -->
+        </div>
+    </div>
+</div>
+<!-- end: HEADER -->
+<!-- start: MAIN CONTAINER -->
+<div class="main-container">
+    <div class="main-content">
+        <div class="container">
+            <?= $this->content ?>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

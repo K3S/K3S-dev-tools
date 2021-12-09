@@ -1,0 +1,57 @@
+<?php
+/** @var Laminas\View\Renderer\PhpRenderer $this */
+
+use Laminas\View\Renderer\PhpRenderer;
+
+/** @var $this PhpRenderer */
+echo $this->doctype();
+?>
+<!--[if IE 8]><html class="ie8 no-js" lang="en"><![endif]-->
+<!--[if IE 9]><html class="ie9 no-js" lang="en"><![endif]-->
+<!--[if !IE]><!-->
+<html class="no-js">
+<!--<![endif]-->
+<head>
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <meta charset="utf-8">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-KyZXEAg3QhqLMpG8r+8fhAXLRk2vvoC2f3B09zVXn8CA5QIVfZOJ3BCsw2P0p/We" crossorigin="anonymous">
+    <?= $this->headTitle('Chuk Tools')->setAutoEscape(false) ?>
+
+    <?php
+    echo $this->headLink();
+    ?>
+
+    <?= $this->headMeta()->appendName('viewPort', 'width=device-width, initial-scale=1.0') ?>
+</head>
+<body class="navigation-small">
+    <main>
+
+        <!-- Navigation -->
+        <div class="container">
+            <header class="d-flex justify-content-center py-3">
+                <ul class="nav nav-pills">
+                    <li class="nav-item"><a href="/generate-sql-file-for-github-issue" class="nav-link active" aria-current="page">API Build</a></li>
+                    <li class="nav-item"><a href="/generate-sql-insert" class="nav-link">Generate SQL Insert</a></li>
+                    <li class="nav-item"><a href="#" class="nav-link">Other tools</a></li>
+                </ul>
+            </header>
+        </div>
+
+    </main>
+
+
+
+    <!-- end: HEADER -->
+    <!-- start: MAIN CONTAINER -->
+    <div class="container">
+        <?= $this->content ?>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-U1DAWAznBHeqEIlVSCgzq+c9gqGAJn5c/t99JyeKa9xxaYpSvHU5awsuZVVFIhvj" crossorigin="anonymous"></script>
+    <?php
+    echo $this->inlineScript()
+    ?>
+</body>
+</html>

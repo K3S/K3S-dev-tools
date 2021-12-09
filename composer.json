@@ -1,0 +1,22 @@
+{
+
+    "require": {
+        "laminas/laminas-db": "^2.12",
+        "symfony/console": "^5.3",
+        "laminas/laminas-servicemanager": "^3.7",
+        "laminas/laminas-mvc": "^3.2",
+        "laminas/laminas-form": "^3.0",
+      "ext-pdo": "*",
+        "laminas/laminas-i18n": "^2.11",
+        "laminas/laminas-math": "^3.3",
+        "laminas/laminas-session": "^2.11",
+        "chukshirley/laminas-ibmi-toolkit": "dev-main"
+    },
+    "autoload": {
+        "psr-4": {
+            "Tools\\": "src",
+            "Application\\": "module/Application/src",
+            "Build\\": "module/Build/src"
+        }
+    }
+}

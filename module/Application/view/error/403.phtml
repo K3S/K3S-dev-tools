@@ -1,0 +1,9 @@
+<?php
+
+use Laminas\View\Renderer\PhpRenderer;
+
+/** @var PhpRenderer $this */
+$this->layout('error/layout');
+?>
+<h1>403 Unauthorized</h1>
+<?= $message; ?>
