@@ -3,25 +3,38 @@ declare(strict_types=1);
 
 namespace Application\Controller;
 
+use Application\Form\GenerateSqlInsertForm;
 use Interop\Container\ContainerInterface;
 use Laminas\Db\Adapter\Adapter;
 use Laminas\Db\Adapter\AdapterInterface;
+use Laminas\Db\Adapter\Driver\IbmDb2\Statement;
+use Laminas\Db\Sql\Select;
+use Laminas\Db\Sql\Sql;
+use Laminas\Form\FormElementManager;
+use Laminas\Form\FormInterface;
 use Laminas\Mvc\Controller\AbstractActionController;
 use Laminas\View\Model\ViewModel;
 
 final class GenerateSqlInsertController extends AbstractActionController
 {
-    private $databaseAdapter;
+    private AdapterInterface $databaseAdapter;
+    private FormInterface $form;
 
-    public function __construct(AdapterInterface $databaseAdapter)
+    /**
+     * @param AdapterInterface $databaseAdapter
+     * @param FormInterface $form
+     */
+    public function __construct(AdapterInterface $databaseAdapter, FormInterface $form)
     {
         $this->databaseAdapter = $databaseAdapter;
+        $this->form = $form;
     }
 
     public static function fromContainer(ContainerInterface $container): self
     {
         return new self(
-            $container->get(Adapter::class)
+            $container->get(Adapter::class),
+            $container->get(FormElementManager::class)->get(GenerateSqlInsertForm::class)
         );
     }
 
@@ -36,25 +49,57 @@ final class GenerateSqlInsertController extends AbstractActionController
 
         if ($this->getRequest()->isPost()) {
             $input = $this->params()->fromPost();
-            $tableName = $input['tableName'];
-            $whereClause = $input['whereClause'];
-            $whereParams = array_filter($input['whereParams']);
+            $query = trim($input['query'], ';');
 
-            $result = $this->generateSqlInsert($tableName, $whereClause, $whereParams);
+
+            $result = $this->generateSqlInsert($query);
             $viewModel->setVariable('tableName', $tableName);
             $viewModel->setVariable('whereClause', $whereClause);
             $viewModel->setVariable('result', $result);
         }
 
+        $viewModel->setVariable('form', $this->form);
+
         return $viewModel;
     }
 
-    private function generateSqlInsert(string $table, string $where, array $whereValues): string
+    private function parseSqlQuery(string $query): array
+    {
+        $sqlKeywords = ['SELECT', 'FROM', 'WHERE', 'ORDER BY', 'LIMIT', 'OFFSET', 'GROUP BY', 'HAVING', 'UNION', 'LEFT JOIN', 'RIGHT JOIN',];
+        $queryKeywords = [];
+        $queryKeywordPositions = [];
+        foreach ($sqlKeywords as $keyword) {
+            if (str_contains($query, $keyword)) {
+                $position = strpos($query, $keyword);
+                $queryKeywords[] = [
+                    'keyword' => $keyword,
+                    'position' => $position,
+                ];
+                $queryKeywordPositions[] = $position;
+            }
+        }
+
+        var_dump($queryKeywords);
+        var_dump($queryKeywordPositions);
+        die();
+
+
+        $query = strtoupper($query);
+        $fromPosition = strpos($query, 'FROM');
+        $select = substr($query, 0, $fromPosition);
+        var_dump($select);
+        die();
+    }
+
+    private function generateSqlInsert(string $query): string
     {
         $retrievalSchema = 'ACS_5DTA';
 
         // Get values
-        $this->values = $this->getValues($retrievalSchema, $table, $where, $whereValues);
+        $this->values = $this->getValues($query);
+
+        $this->parseSqlQuery($query);
+        die();
 
         // Get columns
         $columns = $this->getColumns($retrievalSchema, $table);
@@ -66,7 +111,7 @@ final class GenerateSqlInsertController extends AbstractActionController
         // Generate placeholders string
         $placeholdersString = $this->generatePlaceholdersString(count($columns));
 
-        return "INSERT INTO $table ($columnsString) VALUES ($valuesString)";
+        return "INSERT INTO $table ($columnsString) VALUES ($valuesString);";
     }
 
     /**
@@ -76,13 +121,14 @@ final class GenerateSqlInsertController extends AbstractActionController
      * @param array $whereValues
      * @return array
      */
-    private function getValues(string $retrievalSchema, string $table, string $where, array $whereValues): array
+    private function getValues(string $query): array
     {
-        $sql = "SELECT * from $retrievalSchema.$table $where";
-        $params = $whereValues;
-        $results = $this->databaseAdapter->query($sql, $params)->toArray();
-        $values = $results[0];
-        return array_map('trim', $values);
+        $sql = $query;
+        $results = $this->databaseAdapter->query($sql, [])->toArray();
+        foreach ($results as &$result) {
+            $result = array_map('trim', $result);
+        }
+        return $results;
     }
 
     /**

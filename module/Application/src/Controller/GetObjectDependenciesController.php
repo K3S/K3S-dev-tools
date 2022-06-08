@@ -31,41 +31,50 @@ final class GetObjectDependenciesController extends AbstractActionController
     {
         $input = $this->params()->fromQuery();
         $object = $input['sourceMembers'];
-        $dependencies = [$input['sourceMembers']];
+        $objects = preg_split("/\r\n|\n|\r/", $object);
 
-        $fileExtension = substr(strrchr($object,'.'),1);
-        if ($fileExtension === 'CLLE') {
-            $sql = "SELECT * FROM TABLE(QSYS2.IFS_READ(PATH_NAME => '/QSYS.LIB/WEB_5DEV.LIB/QCLLESRC.FILE/$object.MBR',
+        $sql = '';
+        foreach ($objects as $object) {
+            $dependencies[] = [
+                'name' => $object,
+                'library' => 'WEB_5DEV', // todo: make this dynamic
+            ];
+
+            $fileName = pathinfo($object, PATHINFO_FILENAME);
+            $fileExtension = pathinfo($object, PATHINFO_EXTENSION);
+            if ($fileExtension === 'CLLE') {
+                $sql = "SELECT * FROM TABLE(QSYS2.IFS_READ(PATH_NAME => '/QSYS.LIB/WEB_5DEV.LIB/QCLLESRC.FILE/$fileName.MBR',
                                    END_OF_LINE => 'CRLF')) where ucase(line) like '%/COPY%'";
-        } elseif ($fileExtension === 'RPGLE' || $fileExtension === 'SQLRPGLE') {
-            $sql = "SELECT * FROM TABLE(QSYS2.IFS_READ(PATH_NAME => '/QSYS.LIB/WEB_5DEV.LIB/QRPGLESRC.FILE/$object.MBR',
+            } elseif ($fileExtension === 'RPGLE' || $fileExtension === 'SQLRPGLE') {
+                $sql = "SELECT * FROM TABLE(QSYS2.IFS_READ(PATH_NAME => '/QSYS.LIB/WEB_5DEV.LIB/QRPGLESRC.FILE/$fileName.MBR',
                                    END_OF_LINE => 'CRLF')) where ucase(line) like '%/COPY%'";
-        }
-
-        $results = $this->adapter->query($sql)->execute();
-
-        foreach ($results as $result) {
-
-            if ($fileExtension === 'RPGLE' || $fileExtension === 'SQLRPGLE')
-            {
-                $parsedLine = explode('/copy', $result['LINE']);
-                if (count($parsedLine) === 1) {
-                    $parsedLine = explode('/COPY', $result['LINE']);
-                }
-            } elseif ($fileExtension === 'CLLE') {
-                $parsedLine = explode('/copy', $result['LINE']);
-                if (count($parsedLine) === 1) {
-                    $parsedLine = explode('/COPY', $result['LINE']);
-                }
             }
 
+            $results = $this->adapter->query($sql)->execute();
 
-            $memberName = strtoupper(trim($parsedLine[1]));
+            foreach ($results as $result) {
 
-            $dependencies[] = [
-                'name' => $memberName,
-                'library' => (str_contains($memberName, 'K3S_')) ? 'K3S_5SRC' : 'WEB_5DEV',
-            ];
+                if ($fileExtension === 'RPGLE' || $fileExtension === 'SQLRPGLE')
+                {
+                    $parsedLine = explode('/copy', $result['LINE']);
+                    if (count($parsedLine) === 1) {
+                        $parsedLine = explode('/COPY', $result['LINE']);
+                    }
+                } elseif ($fileExtension === 'CLLE') {
+                    $parsedLine = explode('/copy', $result['LINE']);
+                    if (count($parsedLine) === 1) {
+                        $parsedLine = explode('/COPY', $result['LINE']);
+                    }
+                }
+
+
+                $memberName = strtoupper(trim($parsedLine[1]));
+
+                $dependencies[] = [
+                    'name' => $memberName,
+                    'library' => (str_contains($memberName, 'K3S_')) ? 'K3S_5SRC' : 'WEB_5DEV',
+                ];
+            }
         }
 
         return new JsonModel(['dependencies' => $dependencies]);

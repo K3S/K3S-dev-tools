@@ -1,0 +1,24 @@
+<?php
+    $links = [
+        [
+            'url' => 'https://www.ibm.com/docs/en/ssw_ibm_i_73/pdf/rbafzpdf.pdf',
+            'text' => 'DB2 for i SQL Reference (pdf)',
+        ],
+        [
+            'url' => 'https://www.ibm.com/docs/en/i/7.3?topic=codes-listing-sqlstate-values',
+            'text' => 'DB2 SQL States',
+        ],
+        [
+            'url' => 'https://www.ibm.com/docs/en/ssw_ibm_i_73/pdf/sc092507.pdf',
+            'text' => 'ILE RPG Programmer\'s Guide (pdf)',
+        ]
+    ];
+?>
+
+<ul>
+    <?php foreach ($links as $link) { ?>
+        <li><a href="<?= $link['url'] ?>" target="_blank"><?= $link['text'] ?></a></li>
+    <?php } ?>
+</ul>
+
+**Note: All documentation links are for IBM i OS level 7.3

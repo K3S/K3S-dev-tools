@@ -1,0 +1,9 @@
+<div class="form-group <?= (count($this->element->getMessages()) > 0) ? 'has-error' : '' ?>">
+    <?= $this->formLabel($this->element) ?>
+    <div class="<?= $this->widths ?>">
+        <?= $this->formElement($this->element) ?>
+        <?php foreach ($this->element->getMessages() as $message) { ?>
+            <span class="help-block"><?= $message ?></span>
+        <?php } ?>
+    </div>
+</div>

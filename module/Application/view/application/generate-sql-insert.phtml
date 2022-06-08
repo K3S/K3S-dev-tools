@@ -1,5 +1,7 @@
 <?php
+/** @var \Laminas\Form\FormInterface|\Laminas\Form\Form $form */
 
+$form->prepare();
 ?>
 
 
@@ -7,39 +9,13 @@
 
     <h4>Generate SQL Insert</h4>
 
-    <!-- Table -->
-    <div class="mb-3">
-        <label for="tableName" class="form-label">Table</label>
-        <input type="text" class="form-control" id="tableName" name="tableName" value="<?= $tableName ?>" placeholder="e.g., K_USERPRF">
-    </div>
-
-    <!-- Where clause -->
-    <div class="mb-3">
-        <label for="whereClause" class="form-label">Where clause</label>
-        <input type="text" class="form-control" id="whereClause" name="whereClause" value="<?= $whereClause ?>" placeholder="e.g., WHERE US_USER=?">
-    </div>
-
-    <!-- Where parameters -->
-    <div class="mb-3">
-        <label for="whereParams" class="form-label">Where parameters</label>
-        <div class="row">
-        <?php $counter = 0; ?>
-        <?php foreach ($whereParams as $whereParam) { ?>
-            <div class="col-md-2">
-                <input type="text" class="form-control" name="whereParams[<?= $counter ?>]" value="<?= $whereParam ?>">
-            </div>
-        <?php $counter++; ?>
-        <?php } ?>
-        </div>
-    </div>
-
-    <button type="submit" class="btn btn-danger">Generate SQL Insert</button>
+    <?= $this->form($form) ?>
 </form>
 
 <form id="resultForm">
     <!-- Result -->
     <div class="mb-3">
         <label for="result" class="form-label">Result</label>
-        <textarea class="form-control" rows="100" cols="50" id="result" readonly><?= $this->escapeHtml($result) ?></textarea>
+        <textarea class="form-control" rows="100" cols="50" id="result" style="font-family: monospace, monospace; white-space: pre-wrap; height: 100vh"><?= $this->escapeHtml($result) ?></textarea>
     </div>
 </form>

@@ -2,3 +2,5 @@
 /logs
 .idea
 vendor/
+public/.DS_Store
+.DS_Store

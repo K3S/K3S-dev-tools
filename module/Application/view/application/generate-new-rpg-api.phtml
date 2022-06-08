@@ -1,0 +1,62 @@
+<?php
+
+use Laminas\Form\FormInterface;
+use Laminas\View\Renderer\PhpRenderer;
+
+/** @var $this PhpRenderer */
+/** @var $apiOutput string */
+/** @var $form FormInterface */
+
+$form->setAttributes([
+    'method' => 'POST',
+    'action' => '/generate-new-api',
+]);
+
+$form->prepare();
+
+// Render the opening tag
+echo $this->form()->openTag($form);
+
+
+echo $this->partial('form-element', [
+    'element' => $form->get('apiRootName'),
+    'widths' => 'col-sm-7 col-md-9']
+);
+
+echo $this->partial('form-element', [
+    'element' => $form->get('description'),
+    'widths' => 'col-sm-7 col-md-9']
+);
+
+echo $this->partial('form-element', [
+        'element' => $form->get('author'),
+        'widths' => 'col-sm-7 col-md-9']
+);
+
+echo $this->partial('form-element', [
+        'element' => $form->get('gitHubIssueNumber'),
+        'widths' => 'col-sm-7 col-md-9']
+);
+
+echo $this->formElement($form->get('csrf'));
+
+echo $this->formSubmit($form->get('submit'));
+
+echo $this->partial('form-element', [
+        'element' => $form->get('rpgOutput'),
+        'widths' => 'col-sm-7 col-md-9']
+);
+
+echo $this->partial('form-element', [
+        'element' => $form->get('clOutput'),
+        'widths' => 'col-sm-7 col-md-9']
+);
+
+echo $this->partial('form-element', [
+        'element' => $form->get('tsOutput'),
+        'widths' => 'col-sm-7 col-md-9']
+);
+
+// Render the closing tag
+echo $this->form()->closeTag();
+?>

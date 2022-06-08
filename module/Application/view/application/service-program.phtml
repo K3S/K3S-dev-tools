@@ -1,0 +1,546 @@
+<?php
+
+$tableBaseName = 'INVRLOG';
+$tableName = 'K_' + $tableBaseName;
+$authorNames = ['Chuk Shirley'];
+$currentDate = '02-02-2022';
+$columns = [];
+$keyColumns = [];
+
+?>
+**FREE
+/TITLE Update/Delete/Insert records in <?= $tableName . PHP_EOL ?>
+//---------------------------------------------------------------------
+Ctl-Opt copyright('(C) Copyright 1996 - 2016 King III Solutions, Inc.+
+Rel 6.01 2016-01-01   Program Property of King III Solutions, Inc.+
+All rights reserved              +
+K3S_Replenish (R) is a Registered Trade Mark of King III Solutions+
+Inc.');
+Ctl-Opt nomain;
+
+//***************************************************************
+//
+//   K3S-Replenish (R) - Inventory REPLENISHment System
+//   Copyright (C) 1996-2013 by King III Solutions, Inc.
+//   Program property of King III Solutions, Inc.
+//   All rights reserved.
+//   K3S_Replenish (R) is a Registered Trade Mark of
+//   King III Solutions Inc.
+//
+//***************************************************************
+//   Name: AR_<?= $tableBaseName ?>
+//   Type: SQLRPGLE Program
+//   Desc: Web - Update/Delete/Insert into <?= $tableName ?>
+//   Auth: <?= $authorNames[0] ?>
+//
+//****************************************************************
+//                                                               *
+//   Change ID  Change Date Change Description                   *
+//   ---------  ----------  -------------------------------------*
+//              <?= $currentDate ?>  Initially written.                   *
+//***************************************************************
+Dcl-DS <?= $tableBaseName ?>  extname('<?= $tableName ?>') prefix(nw:2);
+End-DS;
+
+// Prototypes
+/copy <?= $tableBaseName ?>_H
+
+// Global Variables
+//
+// Include any Global Variable
+Dcl-C SQLSTATEOK Const('00000');
+
+exec sql
+set option commit = *none,
+datfmt = *iso,
+closqlcsr = *endactgrp;
+
+//--------------------------------------------------------------------
+// Select Record and populate DS
+//--------------------------------------------------------------------
+Dcl-Proc <?= $tableBaseName ?>_getrecord Export;
+Dcl-PI <?= $tableBaseName ?>_getrecord Ind;
+Company        Char(1);
+Birth          Char(10);
+Buyr           Char(5);
+Locaton        Char(5);
+Forcint        Packed(3:0);
+End-PI;
+Dcl-S isFound      Ind        inz(*off);
+
+<?= $tableBaseName ?>_clear();
+exec sql
+Select IQ_COMP, IQ_BIRTH, IQ_BUYR, IQ_REGN, IQ_LOCN, IQ_FORCINT, IQ_CYCSTCK,  // GH844
+IQ_OVRSTCK, IQ_FORWBOT, IQ_SAFESTK, IQ_ONORDER, IQ_QTYOHND, IQ_QTYMNOH,     // GH844
+IQ_ONORDOV                                                                  // GH844
+into :<?= $tableBaseName ?>
+from <?= $tableName ?>
+Where IQ_COMP    = :Company and
+IQ_BIRTH = :Birth   and
+IQ_BUYR = :Buyr    and
+IQ_LOCN = :Locaton  and
+IQ_FORCINT = :Forcint    -- AFIN
+WITH NC;
+
+if (SQLState = SQLSTATEOK);
+isFound = *on;
+endif;
+
+return isFound;
+End-Proc;
+
+//--------------------------------------------------------------------
+// Clear Data Structure holding Records
+//--------------------------------------------------------------------
+Dcl-Proc <?= $tableBaseName ?>_clear Export;
+Dcl-PI <?= $tableBaseName ?>_clear;
+End-PI;
+
+clear <?= $tableBaseName ?>;
+return;
+End-Proc;
+
+//--------------------------------------------------------------------
+// Get value from Company ID
+//--------------------------------------------------------------------
+Dcl-Proc <?= $tableBaseName ?>_getIQ_COMP export;
+Dcl-PI <?= $tableBaseName ?>_getIQ_COMP Char(1);
+End-PI;
+
+return nw_COMP;
+End-Proc;
+
+//--------------------------------------------------------------------
+// Get value from Record birth date
+//--------------------------------------------------------------------
+Dcl-Proc <?= $tableBaseName ?>_getIQ_BIRTH export;
+Dcl-PI <?= $tableBaseName ?>_getIQ_BIRTH Date;
+End-PI;
+
+return nw_BIRTH;
+End-Proc;
+
+//--------------------------------------------------------------------
+// Get value from Buy Group ID
+//--------------------------------------------------------------------
+Dcl-Proc <?= $tableBaseName ?>_getIQ_BUYR export;
+Dcl-PI <?= $tableBaseName ?>_getIQ_BUYR Char(5);
+End-PI;
+
+return nw_BUYR;
+End-Proc;
+
+//--------------------------------------------------------------------
+// Get value from Region ID
+//--------------------------------------------------------------------
+Dcl-Proc <?= $tableBaseName ?>_getIQ_REGN export;
+Dcl-PI <?= $tableBaseName ?>_getIQ_REGN Char(5);
+End-PI;
+
+return nw_REGN;
+End-Proc;
+
+//--------------------------------------------------------------------
+// Get value from Location ID
+//--------------------------------------------------------------------
+Dcl-Proc <?= $tableBaseName ?>_getIQ_LOCN export;
+Dcl-PI <?= $tableBaseName ?>_getIQ_LOCN Char(5);
+End-PI;
+
+return nw_LOCN;
+End-Proc;
+
+//--------------------------------------------------------------------
+// Get value from Forecast Interval  AFIN
+//--------------------------------------------------------------------
+Dcl-Proc <?= $tableBaseName ?>_getIQ_FORCINT export;
+Dcl-PI <?= $tableBaseName ?>_getIQ_FORCINT Packed(3:0);
+End-PI;
+
+return nw_FORCINT;
+End-Proc;
+
+//--------------------------------------------------------------------
+// Get value from Regular Dollars
+//--------------------------------------------------------------------
+Dcl-Proc <?= $tableBaseName ?>_getIQ_CYCSTCK export;
+Dcl-PI <?= $tableBaseName ?>_getIQ_CYCSTCK Packed(13:2);
+End-PI;
+
+return nw_CYCSTCK;
+End-Proc;
+
+//--------------------------------------------------------------------
+// Get value from Overstock Dollars
+//--------------------------------------------------------------------
+Dcl-Proc <?= $tableBaseName ?>_getIQ_OVRSTCK export;
+Dcl-PI <?= $tableBaseName ?>_getIQ_OVRSTCK Packed(13:2);
+End-PI;
+
+return nw_OVRSTCK;
+End-Proc;
+
+//--------------------------------------------------------------------
+// Get value from Safety Stock Dollars
+//--------------------------------------------------------------------
+Dcl-Proc <?= $tableBaseName ?>_getIQ_FORWBOT export;
+Dcl-PI <?= $tableBaseName ?>_getIQ_FORWBOT Packed(13:2);
+End-PI;
+
+return nw_FORWBOT;
+End-Proc;
+
+//--------------------------------------------------------------------
+// Get value from Obsolete Dollars
+//--------------------------------------------------------------------
+Dcl-Proc <?= $tableBaseName ?>_getIQ_SAFESTK export;
+Dcl-PI <?= $tableBaseName ?>_getIQ_SAFESTK Packed(13:2);
+End-PI;
+
+return nw_SAFESTK;
+End-Proc;
+
+//--------------------------------------------------------------------
+// Get value from On Order Dollars
+//--------------------------------------------------------------------
+Dcl-Proc <?= $tableBaseName ?>_getIQ_ONORDER export;
+Dcl-PI <?= $tableBaseName ?>_getIQ_ONORDER Packed(13:2);
+End-PI;
+
+return nw_ONORDER;
+End-Proc;
+
+//--------------------------------------------------------------------
+// Get value from On Hand  Dollars    INOH
+//--------------------------------------------------------------------
+Dcl-Proc <?= $tableBaseName ?>_getIQ_QTYOHND export;
+Dcl-PI <?= $tableBaseName ?>_getIQ_QTYOHND Packed(13:2);
+End-PI;
+
+return nw_QTYOHND;
+End-Proc;
+
+//--------------------------------------------------------------------
+// Get value from On Hand  Dollars for Manual Items    MNOH
+//--------------------------------------------------------------------
+Dcl-Proc <?= $tableBaseName ?>_getIQ_QTYMNOH export;
+Dcl-PI <?= $tableBaseName ?>_getIQ_QTYMNOH Packed(13:2);
+End-PI;
+
+return nw_QTYMNOH;
+End-Proc;
+
+//--------------------------------------------------------------------
+// Get value from On Order Overstock    GH844
+//--------------------------------------------------------------------
+Dcl-Proc <?= $tableBaseName ?>_getIQ_ONORDOV export;
+Dcl-PI <?= $tableBaseName ?>_getIQ_ONORDOV Packed(13:2);
+End-PI;
+
+return nw_ONORDOV;
+End-Proc;
+
+//--------------------------------------------------------------------
+// Get value from Discontinued On Order  GH844
+//--------------------------------------------------------------------
+Dcl-Proc <?= $tableBaseName ?>_getIQ_QTYDORD export;
+Dcl-PI <?= $tableBaseName ?>_getIQ_QTYDORD Packed(13:2);
+End-PI;
+
+return nw_QTYDORD;
+End-Proc;
+
+//--------------------------------------------------------------------
+// Get value from Manual On Order    MNOH
+//--------------------------------------------------------------------
+Dcl-Proc <?= $tableBaseName ?>_getIQ_QTYMNOR export;
+Dcl-PI <?= $tableBaseName ?>_getIQ_QTYMNOR Packed(13:2);
+End-PI;
+
+return nw_QTYMNOR;
+End-Proc;
+
+//--------------------------------------------------------------------
+// Set value for Company ID
+//--------------------------------------------------------------------
+Dcl-Proc <?= $tableBaseName ?>_setIQ_COMP export;
+Dcl-PI <?= $tableBaseName ?>_setIQ_COMP;
+PmCOMP         Char(1)    const;
+End-PI;
+
+nw_COMP = PmCOMP;
+return;
+End-Proc;
+
+//--------------------------------------------------------------------
+// Set value for Record birth date
+//--------------------------------------------------------------------
+Dcl-Proc <?= $tableBaseName ?>_setIQ_BIRTH export;
+Dcl-PI <?= $tableBaseName ?>_setIQ_BIRTH;
+PmBIRTH        Date       const;
+End-PI;
+
+nw_BIRTH = PmBIRTH;
+return;
+End-Proc;
+
+//--------------------------------------------------------------------
+// Set value for Buy Group ID
+//--------------------------------------------------------------------
+Dcl-Proc <?= $tableBaseName ?>_setIQ_BUYR export;
+Dcl-PI <?= $tableBaseName ?>_setIQ_BUYR;
+PmBUYR         Char(5)    const;
+End-PI;
+
+nw_BUYR = PmBUYR;
+return;
+End-Proc;
+
+//--------------------------------------------------------------------
+// Set value for Region ID    GH844
+//--------------------------------------------------------------------
+Dcl-Proc <?= $tableBaseName ?>_setIQ_REGN export;
+Dcl-PI <?= $tableBaseName ?>_setIQ_REGN;
+PmREGN         Char(5)    const;
+End-PI;
+
+nw_REGN = PmREGN;
+return;
+End-Proc;
+
+//--------------------------------------------------------------------
+// Set value for Location ID
+//--------------------------------------------------------------------
+Dcl-Proc <?= $tableBaseName ?>_setIQ_LOCN export;
+Dcl-PI <?= $tableBaseName ?>_setIQ_LOCN;
+PmLOCN         Char(5)    const;
+End-PI;
+
+nw_LOCN = PmLOCN;
+return;
+End-Proc;
+
+//--------------------------------------------------------------------
+// Set value for Forecast Interval    AFIN
+//--------------------------------------------------------------------
+Dcl-Proc <?= $tableBaseName ?>_setIQ_FORCINT export;
+Dcl-PI <?= $tableBaseName ?>_setIQ_FORCINT;
+PmFORCINT      Packed(3:0)     const;
+End-PI;
+
+nw_FORCINT = PmFORCINT;
+return;
+End-Proc;
+
+//--------------------------------------------------------------------
+// Set value for Regular Dollars
+//--------------------------------------------------------------------
+Dcl-Proc <?= $tableBaseName ?>_setIQ_CYCSTCK export;
+Dcl-PI <?= $tableBaseName ?>_setIQ_CYCSTCK;
+PmCYCSTCK      Packed(13:2)    const;
+End-PI;
+
+nw_CYCSTCK = PmCYCSTCK;
+return;
+End-Proc;
+
+//--------------------------------------------------------------------
+// Set value for Overstock Dollars
+//--------------------------------------------------------------------
+Dcl-Proc <?= $tableBaseName ?>_setIQ_OVRSTCK export;
+Dcl-PI <?= $tableBaseName ?>_setIQ_OVRSTCK;
+PmOVRSTCK      Packed(13:2)    const;
+End-PI;
+
+nw_OVRSTCK = PmOVRSTCK;
+return;
+End-Proc;
+
+//--------------------------------------------------------------------
+// Set value for Safety Stock Dollars
+//--------------------------------------------------------------------
+Dcl-Proc <?= $tableBaseName ?>_setIQ_FORWBOT export;
+Dcl-PI <?= $tableBaseName ?>_setIQ_FORWBOT;
+PmFORWBOT      Packed(13:2)    const;
+End-PI;
+
+nw_FORWBOT = PmFORWBOT;
+return;
+End-Proc;
+
+//--------------------------------------------------------------------
+// Set value for Obsolete Dollars
+//--------------------------------------------------------------------
+Dcl-Proc <?= $tableBaseName ?>_setIQ_SAFESTK export;
+Dcl-PI <?= $tableBaseName ?>_setIQ_SAFESTK;
+PmSAFESTK      Packed(13:2)    const;
+End-PI;
+
+nw_SAFESTK = PmSAFESTK;
+return;
+End-Proc;
+
+//--------------------------------------------------------------------
+// Set value for On Order Dollars
+//--------------------------------------------------------------------
+Dcl-Proc <?= $tableBaseName ?>_setIQ_ONORDER export;
+Dcl-PI <?= $tableBaseName ?>_setIQ_ONORDER;
+PmONORDER      Packed(13:2)    const;
+End-PI;
+
+nw_ONORDER = PmONORDER;
+return;
+End-Proc;
+
+//--------------------------------------------------------------------
+// Set value for On Hand Dollars    INOH
+//--------------------------------------------------------------------
+Dcl-Proc <?= $tableBaseName ?>_setIQ_QTYOHND export;
+Dcl-PI <?= $tableBaseName ?>_setIQ_QTYOHND;
+PmQTYOHND      Packed(13:2)    const;
+End-PI;
+
+nw_QTYOHND = PmQTYOHND;
+return;
+End-Proc;
+
+//--------------------------------------------------------------------
+// Set value for On Hand Dollars for Manual Items    MNOH
+//--------------------------------------------------------------------
+Dcl-Proc <?= $tableBaseName ?>_setIQ_QTYMNOH export;
+Dcl-PI <?= $tableBaseName ?>_setIQ_QTYMNOH;
+PmQTYMNOH      Packed(13:2)    const;
+End-PI;
+
+nw_QTYMNOH = PmQTYMNOH;
+return;
+End-Proc;
+
+//--------------------------------------------------------------------
+// Set value for On Order Overstock    GH844
+//--------------------------------------------------------------------
+Dcl-Proc <?= $tableBaseName ?>_setIQ_ONORDOV export;
+Dcl-PI <?= $tableBaseName ?>_setIQ_ONORDOV;
+PmONORDOV      Packed(13:2)    const;
+End-PI;
+
+nw_ONORDOV = PmONORDOV;
+return;
+End-Proc;
+
+//--------------------------------------------------------------------
+// Set value for Discontinued On Order    GH844
+//--------------------------------------------------------------------
+Dcl-Proc <?= $tableBaseName ?>_setIQ_QTYDORD export;
+Dcl-PI <?= $tableBaseName ?>_setIQ_QTYDORD;
+PmQTYDORD      Packed(13:2)    const;
+End-PI;
+
+nw_QTYDORD = PmQTYDORD;
+return;
+End-Proc;
+
+//--------------------------------------------------------------------
+// Set value for Manual On Order    GH844
+//--------------------------------------------------------------------
+Dcl-Proc <?= $tableBaseName ?>_setIQ_QTYMNOR export;
+Dcl-PI <?= $tableBaseName ?>_setIQ_QTYMNOR;
+PmQTYMNOR      Packed(13:2)    const;
+End-PI;
+
+nw_QTYMNOR = PmQTYMNOR;
+return;
+End-Proc;
+
+//--------------------------------------------------------------------
+// Select record for Delete.. DS
+//--------------------------------------------------------------------
+Dcl-Proc <?= $tableBaseName ?>_Delete Export;
+Dcl-PI <?= $tableBaseName ?>_Delete Ind;
+Company        Char(1);
+Birth          Char(10);
+Buyr           Char(5);
+Locaton        Char(5);
+Forcint        Packed(3:0);    // AFIN
+End-PI;
+Dcl-S isDeleted    Ind        inz(*off);
+
+exec sql
+Delete from <?= $tableName ?>
+Where IQ_COMP = :Company and
+IQ_BIRTH = :Birth and
+IQ_BUYR = :Buyr and
+IQ_LOCN = :Locaton and
+IQ_FORCINT = :Forcint    -- AFIN
+WITH NC;
+
+if (SQLState = SQLSTATEOK);
+isDeleted = *on;
+endif;
+
+return isDeleted;
+End-Proc;
+
+//--------------------------------------------------------------------
+// Select record for Update... DS    *
+//--------------------------------------------------------------------
+Dcl-Proc <?= $tableBaseName ?>_update Export;
+Dcl-PI <?= $tableBaseName ?>_update Ind;
+Company        Char(1);
+Birth          Char(10);
+Buyr           Char(5);
+Locaton        Char(5);
+Forcint        Packed(3:0);    // AFIN
+End-PI;
+Dcl-S isUpdated    Ind        inz(*off);
+
+exec sql
+update <?= $tableName ?>
+set
+IQ_COMP = :nw_COMP, IQ_BIRTH = :nw_BIRTH, IQ_BUYR = :nw_BUYR,
+IQ_REGN = :nw_REGN,    -- GH844
+IQ_LOCN = :nw_LOCN, IQ_FORCINT = :nw_FORCINT, IQ_CYCSTCK = :nw_CYCSTCK,
+IQ_OVRSTCK = :nw_OVRSTCK, IQ_FORWBOT = :nw_FORWBOT, IQ_SAFESTK = :nw_SAFESTK,
+IQ_ONORDER = :nw_ONORDER, IQ_QTYOHND = :nw_QTYOHND, IQ_QTYMNOH = :nw_QTYMNOH,
+IQ_ONORDOV = :nw_ONORDOV, IQ_QTYDORD = :nw_QTYDORD, IQ_QTYMNOR = :nw_QTYMNOR    --GH844
+Where IQ_COMP = :Company and
+IQ_BIRTH = :Birth and
+IQ_BUYR = :Buyr and
+IQ_LOCN = :Locaton and
+IQ_FORCINT = :Forcint    --AFIN
+WITH NC;
+
+if (SQLState = SQLSTATEOK);
+isUpdated = *on;
+endif;
+
+return isUpdated;
+End-Proc;
+
+//--------------------------------------------------------------------
+// Select record for Write... DS     *
+//--------------------------------------------------------------------
+Dcl-Proc <?= $tableBaseName ?>_insert Export;
+Dcl-PI <?= $tableBaseName ?>_insert Ind;
+End-PI;
+Dcl-S isWritten    Ind        inz(*off);
+
+exec sql
+insert into <?= $tableName ?>(
+IQ_COMP, IQ_BIRTH, IQ_BUYR, IQ_REGN, IQ_LOCN, IQ_FORCINT,    -- GH844
+IQ_CYCSTCK, IQ_OVRSTCK, IQ_FORWBOT, IQ_SAFESTK, IQ_ONORDER,
+IQ_QTYOHND, IQ_QTYMNOH, IQ_ONORDOV, IQ_QTYDORD, IQ_QTYMNOR    -- GH844
+) values (
+:nw_COMP, :nw_BIRTH, :nw_BUYR, :nw_REGN, :nw_LOCN,    -- GH844
+:nw_FORCINT, :nw_CYCSTCK, :nw_OVRSTCK, :nw_FORWBOT, :nw_SAFESTK,
+:nw_ONORDER, :nw_QTYOHND, :nw_qtymnoh, :nw_onordov, :nw_qtydord, -- GH844
+:nw_qtymnor    -- GH844
+)
+WITH NC;
+
+if (SQLState = SQLSTATEOK);
+isWritten = *on;
+endif;
+
+return isWritten;
+End-Proc;

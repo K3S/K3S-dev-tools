@@ -99,7 +99,11 @@ echo <<<JS
                     sourceMembers: $('#sourceMembers').val()
                 }
             }).done(function (response) {
-                $('#dependencies').val(response.dependencies[0]);
+                
+                for (var i = 0; i < response.dependencies.length; i++) {
+                    $('#dependencies').append(response.dependencies[i].name + ' \\r\\n');
+                }
+
             });
 
         });

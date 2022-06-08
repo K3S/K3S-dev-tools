@@ -1,0 +1,198 @@
+<?php
+/** @var $apiRootName string */
+/** @var $description string */
+/** @var $author string[] */
+/** @var $currentDate DateTimeInterface */
+/** @var $githubIssueNumber string */
+?>
+**FREE
+//**************************************************************
+Ctl-Opt copyright('(C) Copyright 1996 - <?= (new DateTime('now'))->format('Y') ?> King III Solutions, Inc.+
+Rel 6.01 2016-01-01   Program Property of King III Solutions, Inc.+
+All rights reserved              +
+K3S_Replenish (R) is a Registered Trade Mark of King III Solutions+
+Inc.');
+
+Ctl-Opt DFTACTGRP(*NO) ACTGRP('K3S_ACTG_5') option(*nodebugio);
+Ctl-Opt bnddir('K3SDIR');
+
+//**************************************************************
+//
+//  K3S-Replenish (R) - Inventory REPLENISHment System
+//  Copyright (C) 1996-2013 by King III Solutions, Inc.
+//  Program property of King III Solutions, Inc.
+//  All rights reserved.
+//  K3S_Replenish (R) is a Registered Trade Mark of
+//  King III Solutions Inc.
+//
+//**************************************************************
+//
+//  Name: AR_<?= $apiRootName . PHP_EOL ?>
+//  Type: ILE RPG Program
+//  Desc: <?= $description . PHP_EOL ?>
+//  Auth: <?= $author . PHP_EOL ?>
+//
+//****************************************************************
+//                                                               *
+//   Change ID  Change Date Change Description                   *
+//   ---------  ----------  -------------------------------------*
+//     <?= $githubIssueNumber ?>    <?= $currentDate->format('Y-m-d') ?>  Initially written.                   *
+//***************************************************************
+
+// --------------- Constants --------------------
+Dcl-C SQL_STATE_OK Const('00000');
+Dcl-C ROW_NOT_FOUND Const('02000');
+Dcl-C EMPTY_STRING Const('');
+Dcl-C ONE_SPACE Const(' ');
+
+//---------------- Program Variables -------------------
+Dcl-S wkfound                    Ind;
+Dcl-S wk_codetyp                 Char(3)     inz;
+Dcl-S wk_codeval                 Char(20)    inz;
+
+Dcl-DS validationResult Qualified;
+  isValid       Ind;
+  errorField    Char(20)  inz(*blanks);
+  errorMessage  Char(100) inz(*blanks);
+End-DS;
+
+/copy ar_dexcer
+//--------------------------- Procedure definitions ---------------------------
+/copy k3s_apipro
+/copy ar_srlnb_h
+/copy ar_excer_h
+/copy company_h
+/copy product_h
+/copy locatns_h
+/copy tablcod_h
+
+//--------------------------- Main Procedure Interface -------------------------
+Dcl-PI AR_<?= $apiRootName ?>;
+  comp           Char(1);      // Company
+  compcod        Char(3);      // Company code
+  user           Char(10);     // User profile
+  errors         Char(1);      // Errors exist flag
+  errmsg         Char(100);    // Error message
+  errfield       Char(20);     // Erroneous field
+End-PI;
+
+//---------------------------------------------------- Local Data Area
+/copy ar_pgmdstr
+/copy k3s_c030
+
+//--------------------------------------------------------------
+//* Setting Defaults...
+//--------------------------------------------------------------
+exec sql
+set option commit = *none,
+datfmt = *iso,
+closqlcsr = *endactgrp;
+
+//*===============================================================================
+//* Monitor flag and  write record in APILOG.                                    =
+//*===============================================================================
+/copy ar_mexcer
+
+// Validate input
+validationResult = InputIsValid(comp);
+if (validationResult.isValid = *off);
+  errfield = validationResult.errorField;
+  errmsg = validationResult.errorMessage;
+  errors = '1';
+  *inlr = *on;
+  return;
+endif;
+
+//*===============================================================================
+//* Managing On-Error Condition & update APILOG either by error or Normal Process=
+//*===============================================================================
+/copy ar_oexcer
+
+*inlr = *on;
+return;
+
+
+
+//-----------------------------------------------------------------
+//-------- Build Members in case that any errors
+//-----------------------------------------------------------------
+begsr $_bld_mbrs;
+
+  wk_bodypgm = %subst(Pgmds.Pgm_Lib:1:3);
+  wk_codetyp = 'BBK';
+  wk_codeval = 'RELEASE   LEVEL ';
+  wkfound = tablcod_getrecord(comp:wk_codetyp:wk_codeval);
+  if (wkfound = *on);
+    wk_bodyrls = tablcod_getTA_CODEDS1();
+  endif;
+  wk_bodygrp = %subst(PgmDs.Proc_Name:7:4);
+
+  wk_bodynam = 'COMP: ';
+  wk_bodyval = comp;
+  AR_BLDTEXT(wk_bodypgm:wk_bodyrls:wk_bodygrp:wk_bodynam:wk_bodyval:er_bodymbr);
+
+  wk_bodynam = 'COMPCOD: ';
+  wk_bodyval = compcod;
+  AR_BLDTEXT(wk_bodypgm:wk_bodyrls:wk_bodygrp:wk_bodynam:wk_bodyval:er_bodymbr);
+
+  wk_bodynam = 'USER: ';
+  wk_bodyval = user;
+  AR_BLDTEXT(wk_bodypgm:wk_bodyrls:wk_bodygrp:wk_bodynam:wk_bodyval:er_bodymbr);
+
+  wk_bodynam = 'ERRORS: ';
+  wk_bodyval = errors;
+  AR_BLDTEXT(wk_bodypgm:wk_bodyrls:wk_bodygrp:wk_bodynam:wk_bodyval:er_bodymbr);
+
+  wk_bodynam = 'ERRMSG: ';
+  wk_bodyval = %subst(errmsg:1:90);
+  AR_BLDTEXT(wk_bodypgm:wk_bodyrls:wk_bodygrp:wk_bodynam:wk_bodyval:er_bodymbr);
+
+  wk_bodynam = 'ERRFIELD: ';
+  wk_bodyval = errfield;
+  AR_BLDTEXT(wk_bodypgm:wk_bodyrls:wk_bodygrp:wk_bodynam:wk_bodyval:er_bodymbr);
+
+  //-----------------------------------------------------------------
+  //-------- No more parameters - We sent 999 to remove from memory
+  //         AR_BLDTEXT.
+  //-----------------------------------------------------------------
+  wk_bodypgm= '999';
+  AR_BLDTEXT(wk_bodypgm:wk_bodyrls:wk_bodygrp:wk_bodynam:wk_bodyval:er_bodymbr);
+
+endsr;
+
+
+/copy ar_cexcer
+
+
+//================================================================== //
+// Validate input parameters
+//================================================================== //
+Dcl-Proc InputIsValid;
+Dcl-PI InputIsValid likeds(validationResult);
+  comp Char(1);
+End-PI;
+
+  Dcl-S isValid Ind inz(*on);
+  Dcl-S isFound Ind inz(*on);
+
+  Dcl-DS validationResult Qualified;
+    isValid Ind inz(*on);
+    errorField Char(20) inz(*blanks);
+    errorMessage Char(100) inz(*blanks);
+  End-DS;
+
+  // Validate company value
+  isFound = company_getrecord(comp);
+  if (isFound = *off);
+    validationResult.isValid = *off;
+    validationResult.errorField = 'comp';
+    validationResult.errorMessage = 'Company value invalid';
+
+    return validationResult;
+  endif;
+
+  // Validate other input parameters...
+
+  return validationResult;
+
+End-Proc;

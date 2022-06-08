@@ -1,0 +1,113 @@
+<?php
+/** @var string $testName */
+?>
+<?php echo "<?php"; ?>
+
+namespace MassUpdateBatches;
+
+use Application\Bootstrap;
+use Laminas\Db\Adapter\Adapter;
+use Laminas\Db\Adapter\AdapterInterface;
+use Laminas\Db\Adapter\Driver\ResultInterface;
+use Laminas\Db\ResultSet\ResultSet;
+use PHPUnit\Framework\TestCase;
+use ToolkitApi\Toolkit;
+use ToolkitApi\ToolkitInterface;
+
+final class <?= $testName ?> extends TestCase
+{
+    /**
+     * @var ToolkitInterface|Toolkit
+     */
+    private $toolkit;
+
+    /**
+     * @var AdapterInterface|Adapter
+     */
+    private $adapter;
+
+
+    public function setUp(): void
+    {
+        $this->toolkit = Bootstrap::getToolkit();
+        $this->adapter = Bootstrap::getContainer()->get(Adapter::class);
+
+        parent::setUp();
+    }
+
+    public function testCanCreateBatch()
+    {
+        Bootstrap::executeSqlStatement('delete from k_mfubhed');
+
+        $K3SOBJ = 'ACS_5DEV';
+        $COMP = 'C';
+        $USER = 'CHUK';
+        $IDLOCN = '1';
+
+        $buyer = 'JB';
+        $region = '';
+        $supplier = '022399';
+        $subSupplier = '';
+        $product = '';
+        $supplierGroup1 = '';
+        $supplierGroup2 = '';
+        $supplierGroup3 = '';
+        $supplierGroup4 = '';
+        $supplierGroup5 = '';
+        $productGroup1 = '';
+        $productGroup2 = '';
+        $productGroup3 = '';
+        $productGroup4 = '';
+        $productGroup5 = '';
+        $filter = '09';
+
+
+        $param[] = $this->toolkit->AddParameterChar('BOTH', 10, 'K3S Object Library', 'K3SOBJ', $K3SOBJ);
+        $param[] = $this->toolkit->AddParameterChar('BOTH', 1, 'Company', 'COMP', $COMP);
+        $param[] = $this->toolkit->AddParameterChar('BOTH', 3, 'Company Code', 'COMPCOD', $COMPCOD);
+        $param[] = $this->toolkit->AddParameterChar('BOTH', 10, 'User calling the program', 'USER', $USER);
+        $param[] = $this->toolkit->AddParameterChar('BOTH', 1, 'Error indicator', 'ERRORS', '');
+        $param[] = $this->toolkit->AddParameterChar('BOTH', 100, 'Error message', 'ERRMSG', '');
+        $param[] = $this->toolkit->AddParameterChar('BOTH', 20, 'Field in error', 'ERRFIELD', '');
+
+        //$this->toolkit->setOptions(array('customControl'=>'*debug'));
+
+        $result = $this->toolkit->PgmCall("AC_ADDMFUB", 'ACS_5OBJ', $param, null, null);
+        if ($result === false) {
+            var_dump($this->toolkit->getErrorCode());
+            var_dump($this->toolkit->getErrorMsg());
+        }
+
+
+    }
+
+    public function testCanAddEntryToBatch()
+    {
+
+    }
+
+    public function testCanUpdateBatchEntry()
+    {
+
+    }
+
+    public function testCanRemoveEntryFromBatch()
+    {
+
+    }
+
+    public function testCanChangeBatchMemo()
+    {
+
+    }
+
+    public function testCanDeleteBatch()
+    {
+
+    }
+
+    public function testCanGenerateSupplierCode()
+    {
+
+    }
+}
