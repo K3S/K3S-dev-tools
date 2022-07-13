@@ -2,6 +2,7 @@
 
 use Application\Controller\CopyFromDeploymentToDevelopmentController;
 use Application\Controller\GenerateNewApiController;
+use Application\Controller\GenerateQueryResultDataStructureDefinitionFromQueryController;
 use Application\Controller\GenerateSqlFileForGithubIssueController;
 use Application\Controller\GenerateSqlInsertController;
 use Application\Controller\GenerateTableDataGatewayServiceProgramController;
@@ -10,6 +11,7 @@ use Application\Controller\HelpfulLinksController;
 use Application\Controller\IndexController;
 use Application\Controller\MoveGutterCommentsToEndOfLineController;
 use Application\Controller\RPGFixedToFreeCommentColumnConverterController;
+use Application\Form\GenerateQueryResultDataStructureDefinitionFromQueryForm;
 use Application\Form\GenerateSqlFileForGithubIssueForm;
 use Application\Form\GenerateSqlInsertForm;
 use Application\Service\GetObjectDependenciesService;
@@ -27,6 +29,7 @@ return [
         'factories' => [
             CopyFromDeploymentToDevelopmentController::class => [CopyFromDeploymentToDevelopmentController::class, 'fromContainer'],
             GenerateNewApiController::class => [GenerateNewApiController::class, 'fromContainer'],
+            GenerateQueryResultDataStructureDefinitionFromQueryController::class => [GenerateQueryResultDataStructureDefinitionFromQueryController::class, 'fromContainer'],
             GenerateSqlFileForGithubIssueController::class => [GenerateSqlFileForGithubIssueController::class, 'fromContainer'],
             GenerateSqlInsertController::class => [GenerateSqlInsertController::class, 'fromContainer'],
             GenerateTableDataGatewayServiceProgramController::class => [GenerateTableDataGatewayServiceProgramController::class, 'fromContainer'],
@@ -39,6 +42,7 @@ return [
     ],
     'form_elements' => [
         'factories' => [
+            GenerateQueryResultDataStructureDefinitionFromQueryForm::class => [GenerateQueryResultDataStructureDefinitionFromQueryForm::class, 'fromContainer'],
             GenerateSqlFileForGithubIssueForm::class => [GenerateSqlFileForGithubIssueForm::class, 'fromContainer'],
             GenerateSqlInsertForm::class => [GenerateSqlInsertForm::class, 'fromContainer'],
         ],
@@ -61,6 +65,16 @@ return [
                     'route' => '/helpful-links',
                     'defaults' => [
                         'controller' => HelpfulLinksController::class,
+                        'action' => 'index',
+                    ],
+                ],
+            ],
+            'generate-query-result-data-structure-definition-from-query' => [
+                'type' => Literal::class,
+                'options' => [
+                    'route' => '/generate-query-result-data-structure-definition-from-query',
+                    'defaults' => [
+                        'controller' => GenerateQueryResultDataStructureDefinitionFromQueryController::class,
                         'action' => 'index',
                     ],
                 ],

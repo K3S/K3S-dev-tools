@@ -1,0 +1,21 @@
+<?php
+/** @var \Laminas\Form\FormInterface|\Laminas\Form\Form $form */
+
+$form->prepare();
+?>
+
+
+<form id="generateQueryResultDataStructureDefinitionFromQueryForm" method="POST">
+
+    <h4>Generate Query Result Data Structure Definition From Query</h4>
+
+    <?= $this->form($form) ?>
+</form>
+
+<form id="resultForm">
+    <!-- Result -->
+    <div class="mb-3">
+        <label for="result" class="form-label">Result</label>
+        <textarea class="form-control" rows="100" cols="50" id="result" style="font-family: monospace, monospace; white-space: pre-wrap; height: 100vh"><?= $this->escapeHtml($result) ?></textarea>
+    </div>
+</form>
