@@ -1,0 +1,18 @@
+<form action="/convert-copy-statements" method="POST">
+    <div class="row">
+        <div class="col-xs-12">
+            <label for="input" class="form-label">Input</label>
+            <textarea id="input" rows="40" name="input" style="width:100%; font-family: monospace, monospace; white-space: pre-wrap; font-size: .85em"><?= $input ?></textarea>
+        </div>
+        <div class="col-xs-12 col-sm-3">
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-xs-12">
+            <label for="output" class="form-label">Output</label>
+            <textarea id="output" rows="40" placeholder="Output" name="output" style="width:100%; font-family: monospace, monospace; white-space: pre-wrap; font-size: .85em"><?= $output ?></textarea>
+        </div>
+    </div>
+
+</form>

@@ -6,4 +6,5 @@ return [
     'LaminasIbmiToolkit',
     'Application',
     'Build',
+    'Console',
 ];

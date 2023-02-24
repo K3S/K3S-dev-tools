@@ -38,7 +38,10 @@ echo $this->partial('form-element', [
         'widths' => 'col-sm-7 col-md-9']
 );
 
-echo $this->formElement($form->get('csrf'));
+echo $this->partial('form-element', [
+    'element' => $form->get('procedureInterface'),
+    'widths' => 'col-sm-7 col-md-9']
+);
 
 echo $this->formSubmit($form->get('submit'));
 

@@ -4,9 +4,13 @@
 /** @var $author string[] */
 /** @var $currentDate DateTimeInterface */
 /** @var $githubIssueNumber string */
+/** @var $parameters array[]  */
+
+use Application\View\Parser;
+
 ?>
 **FREE
-//**************************************************************
+// **************************************************************
 Ctl-Opt copyright('(C) Copyright 1996 - <?= (new DateTime('now'))->format('Y') ?> King III Solutions, Inc.+
 Rel 6.01 2016-01-01   Program Property of King III Solutions, Inc.+
 All rights reserved              +
@@ -16,28 +20,24 @@ Inc.');
 Ctl-Opt DFTACTGRP(*NO) ACTGRP('K3S_ACTG_5') option(*nodebugio);
 Ctl-Opt bnddir('K3SDIR');
 
-//**************************************************************
-//
+// **************************************************************
 //  K3S-Replenish (R) - Inventory REPLENISHment System
 //  Copyright (C) 1996-2013 by King III Solutions, Inc.
 //  Program property of King III Solutions, Inc.
 //  All rights reserved.
 //  K3S_Replenish (R) is a Registered Trade Mark of
 //  King III Solutions Inc.
-//
-//**************************************************************
-//
+// **************************************************************
 //  Name: AR_<?= $apiRootName . PHP_EOL ?>
 //  Type: ILE RPG Program
 //  Desc: <?= $description . PHP_EOL ?>
 //  Auth: <?= $author . PHP_EOL ?>
-//
-//****************************************************************
+// ****************************************************************
 //                                                               *
 //   Change ID  Change Date Change Description                   *
 //   ---------  ----------  -------------------------------------*
 //     <?= $githubIssueNumber ?>    <?= $currentDate->format('Y-m-d') ?>  Initially written.                   *
-//***************************************************************
+// ***************************************************************
 
 // --------------- Constants --------------------
 Dcl-C SQL_STATE_OK Const('00000');
@@ -45,7 +45,7 @@ Dcl-C ROW_NOT_FOUND Const('02000');
 Dcl-C EMPTY_STRING Const('');
 Dcl-C ONE_SPACE Const(' ');
 
-//---------------- Program Variables -------------------
+// ---------------- Program Variables -------------------
 Dcl-S wkfound                    Ind;
 Dcl-S wk_codetyp                 Char(3)     inz;
 Dcl-S wk_codeval                 Char(20)    inz;
@@ -56,44 +56,49 @@ Dcl-DS validationResult Qualified;
   errorMessage  Char(100) inz(*blanks);
 End-DS;
 
-/copy ar_dexcer
-//--------------------------- Procedure definitions ---------------------------
-/copy k3s_apipro
-/copy ar_srlnb_h
-/copy ar_excer_h
-/copy company_h
-/copy product_h
-/copy locatns_h
-/copy tablcod_h
+/COPY 'qrpglesrc/ar_dexcer.rpgle'
+// --------------------------- Procedure definitions ---------------------------
+/COPY 'qrpglesrc/k3s_apipro.rpgle'
+/COPY 'qrpglesrc/ar_srlnb_h.rpgle'
+/COPY 'qrpglesrc/ar_excer_h.rpgle'
+/COPY 'qrpglesrc/company_h.rpgle'
+/COPY 'qrpglesrc/product_h.rpgle'
+/COPY 'qrpglesrc/locatns_h.rpgle'
+/COPY 'qrpglesrc/tablcod_h.rpgle'
 
-//--------------------------- Main Procedure Interface -------------------------
+// --------------------------- Main Procedure Interface -------------------------
 Dcl-PI AR_<?= $apiRootName ?>;
-  comp           Char(1);      // Company
-  compcod        Char(3);      // Company code
-  user           Char(10);     // User profile
-  errors         Char(1);      // Errors exist flag
-  errmsg         Char(100);    // Error message
-  errfield       Char(20);     // Erroneous field
+<?php if (count($parameters) > 0) { ?>
+<?php foreach ($parameters as $parameter) {
+    if ($parameter['parameterName'] === 'k3sobj') {
+        continue;
+    }
+    echo '  ' . $parameter['parameterName'] . substr('            ', 0, (2 + (10 - strlen($parameter['parameterName'])))) .
+        $parameter['dataType'] . substr('                    ', 0, (2 + (20 - strlen($parameter['dataType'])))) .
+        '// ' . $parameter['description'] . "\n";
+ } ?>
+<?php } ?>
 End-PI;
 
-//---------------------------------------------------- Local Data Area
-/copy ar_pgmdstr
-/copy k3s_c030
+// ---------------------------------------------------- Local Data Area
+/COPY 'qrpglesrc/ar_pgmdstr.rpgle'
+/COPY qrpglesrc,k3s_c030
 
-//--------------------------------------------------------------
-//* Setting Defaults...
-//--------------------------------------------------------------
+// --------------------------------------------------------------
+// * Setting Defaults...
+// --------------------------------------------------------------
 exec sql
-set option commit = *none,
-datfmt = *iso,
-closqlcsr = *endactgrp;
+  set option commit = *none,
+             datfmt = *iso,
+          closqlcsr = *endactgrp;
 
-//*===============================================================================
-//* Monitor flag and  write record in APILOG.                                    =
-//*===============================================================================
-/copy ar_mexcer
+// *===============================================================================
+// * Monitor flag and  write record in APILOG.                                    =
+// *===============================================================================
+/COPY 'qrpglesrc/ar_mexcer.rpgle'
 
 // Validate input
+//  - Pass each input parameter to the InputIsValid procedure where they will be validated
 validationResult = InputIsValid(comp);
 if (validationResult.isValid = *off);
   errfield = validationResult.errorField;
@@ -103,19 +108,71 @@ if (validationResult.isValid = *off);
   return;
 endif;
 
-//*===============================================================================
-//* Managing On-Error Condition & update APILOG either by error or Normal Process=
-//*===============================================================================
-/copy ar_oexcer
+// Call exit point
+wk_codetyp = 'YSE';
+wk_codeval = 'AB_<?= $apiRootName ?>';
+wkfound = tablcod_getrecord(comp:wk_codetyp:wk_codeval);
+if (wkfound = *on and tablcod_getTA_FLAG1() = 1);
+  AB_<?= $apiRootName ?>(<?php
+$count = 0;
+foreach ($parameters as $parameter) {
+    if ($parameter['parameterName'] === 'k3sobj') {
+        continue;
+    }
+    echo $parameter['parameterName'];
+    if ($count < (count($parameters) - 2)) {
+        echo ":";
+    }
+    if (($count > 0) && ($count % 6 == 0)) {
+        echo "\n      ";
+    }
+    $count++;
+}
+  ?>);
+endif;
+
+// =================================================================================
+// Main logic
+// =================================================================================
+
+// Put the program logic here...
+
+// Call exit point
+wk_codetyp = 'YSE';
+wk_codeval = 'AE_<?= $apiRootName ?>';
+wkfound = tablcod_getrecord(comp:wk_codetyp:wk_codeval);
+if (wkfound = *on and tablcod_getTA_FLAG1() = 1);
+  AE_<?= $apiRootName ?>(<?php
+$count = 0;
+foreach ($parameters as $parameter) {
+    if ($parameter['parameterName'] === 'k3sobj') {
+        continue;
+    }
+    echo $parameter['parameterName'];
+    if ($count < (count($parameters) - 2)) {
+        echo ":";
+    }
+    if (($count > 0) && ($count % 6 == 0)) {
+        echo "\n      ";
+    }
+    $count++;
+}
+?>);
+endif;
+
+// *===============================================================================
+// * Managing On-Error Condition & update APILOG either by error or Normal Process=
+// *===============================================================================
+/COPY 'qrpglesrc/ar_oexcer.rpgle'
 
 *inlr = *on;
 return;
 
 
 
-//-----------------------------------------------------------------
-//-------- Build Members in case that any errors
-//-----------------------------------------------------------------
+// -----------------------------------------------------------------
+// -------- Build Members in case that any errors
+// -----------------------------------------------------------------
 begsr $_bld_mbrs;
 
   wk_bodypgm = %subst(Pgmds.Pgm_Lib:1:3);
@@ -150,27 +207,42 @@ begsr $_bld_mbrs;
   wk_bodynam = 'ERRFIELD: ';
   wk_bodyval = errfield;
   AR_BLDTEXT(wk_bodypgm:wk_bodyrls:wk_bodygrp:wk_bodynam:wk_bodyval:er_bodymbr);
+<?php foreach ($parameters as $parameter) {
+if ($parameter['parameterName'] === 'k3sobj') {
+    continue;
+}
+    ?>
 
-  //-----------------------------------------------------------------
-  //-------- No more parameters - We sent 999 to remove from memory
-  //         AR_BLDTEXT.
-  //-----------------------------------------------------------------
+  wk_bodynam = '<?= strtoupper($parameter['parameterName']) ?>: ';
+<?php if (str_contains($parameter['dataType'], 'Char')) { ?>
+  wk_bodyval = <?= strtolower($parameter['parameterName']) ?>;
+<?php } else { ?>
+  wk_bodyval = %CHAR(<?= strtolower($parameter['parameterName']) ?>);
+<?php } ?>
+  AR_BLDTEXT(wk_bodypgm:wk_bodyrls:wk_bodygrp:wk_bodynam:wk_bodyval:er_bodymbr);
+<?php } ?>
+
+  // -----------------------------------------------------------------
+  // -------- No more parameters - We sent 999 to remove from memory
+  //          AR_BLDTEXT.
+  // -----------------------------------------------------------------
   wk_bodypgm= '999';
   AR_BLDTEXT(wk_bodypgm:wk_bodyrls:wk_bodygrp:wk_bodynam:wk_bodyval:er_bodymbr);
 
 endsr;
 
 
-/copy ar_cexcer
+/COPY 'qrpglesrc/ar_cexcer.rpgle'
 
 
-//================================================================== //
+// ================================================================== //
 // Validate input parameters
-//================================================================== //
+// ================================================================== //
 Dcl-Proc InputIsValid;
-Dcl-PI InputIsValid likeds(validationResult);
-  comp Char(1);
-End-PI;
+  Dcl-PI InputIsValid likeds(validationResult);
+    comp Char(1);
+    // Define other parameters here...
+  End-PI;
 
   Dcl-S isValid Ind inz(*on);
   Dcl-S isFound Ind inz(*on);

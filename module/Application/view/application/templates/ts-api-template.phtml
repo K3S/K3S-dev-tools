@@ -18,7 +18,7 @@
 /*                                                                 */
 /*******************************************************************/
 /*                                                                 */
-/*         Name: AC_<?= $apiRootName ?>                                        */
+/*         Name: TS_<?= $apiRootName ?>                                        */
 /*         Type: CL Program                                        */
 /*         Auth: <?= $author ?>                                      */
 /*         Desc: Web - <?= $description ?>             */
@@ -79,7 +79,7 @@ foreach ($parameters as $parameter) {
 
     echo "LEN(";
     echo $parameter['length'] . ' ' . $parameter['precision'];
-    echo ")";
+    echo ") VALUE()";
     echo "\n\n";
 
     $count++;
@@ -95,7 +95,7 @@ MONMSG     MSGID(CPF0000)
 /*******************************************************************/
 /*      Call program to process mass field update batch            */
 /*******************************************************************/
-CALL       PGM(AR_<?= $apiRootName ?>) PARM(<?php
+CALL       PGM(AC_<?= $apiRootName ?>) PARM(<?php
 $count = 0;
 foreach ($parameters as $parameter) {
     if ($parameter['parameterName'] === 'k3sobj') {

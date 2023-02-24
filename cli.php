@@ -14,10 +14,6 @@ chdir(__DIR__);
 // Composer autoloading
 require __DIR__ . '/vendor/autoload.php';
 
-$servicesConfig = require __DIR__ . '/config/services.php';
-
-$serviceManager = new ServiceManager($servicesConfig);
-$consoleApplication = $serviceManager->get(Application::class);
-$consoleApplication->setHelperSet($serviceManager->get(HelperSet::class));
-
-$consoleApplication->run();
+$mvcApplicationConfig = require __DIR__ . '/config/application.config.php';
+$mvcApplication = \Laminas\Mvc\Application::init($mvcApplicationConfig);
+$mvcApplication->getServiceManager()->get(Application::class)->run();

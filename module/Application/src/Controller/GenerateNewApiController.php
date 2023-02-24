@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Application\Controller;
 
+use Application\View\Parser;
 use Interop\Container\ContainerInterface;
 use Laminas\Form\Element\Submit;
 use Laminas\Form\Element\Text;
@@ -11,7 +12,6 @@ use Laminas\Form\Factory;
 use Laminas\Form\FormInterface;
 use Laminas\Hydrator\ArraySerializableHydrator;
 use Laminas\Mvc\Controller\AbstractActionController;
-use Laminas\Form\Element\Csrf;
 use Laminas\View\Model\ViewModel;
 use Laminas\View\Renderer\PhpRenderer;
 use Laminas\View\Renderer\RendererInterface;
@@ -69,8 +69,16 @@ final class GenerateNewApiController extends AbstractActionController
                 ],
                 [
                     'spec' => [
-                        'type' => Csrf::class,
-                        'name' => 'csrf',
+                        'type' => Textarea::class,
+                        'name' => 'procedureInterface',
+                        'options' => [
+                            'label' => 'Procedure Interface',
+                        ],
+                        'attributes' => [
+                            'rows' => '30',
+                            'class' => 'form-control',
+                            'style' => 'width:100%; font-family: monospace, monospace; white-space: pre-wrap; font-size: .85em; height:20em',
+                        ],
                     ],
                 ],
                 [
@@ -162,6 +170,7 @@ final class GenerateNewApiController extends AbstractActionController
                 'author' => $input['author'],
                 'currentDate' => new \DateTimeImmutable('now'),
                 'githubIssueNumber' => $input['gitHubIssueNumber'],
+                'parameters' => (new Parser())->parseParameters(explode("\n", str_replace("\r", "", $input['procedureInterface'])))
             ]);
             $rpgApiOutput = $this->renderer->render($rpgApiViewModel);
             $this->form->get('rpgOutput')->setValue($rpgApiOutput);
@@ -175,8 +184,21 @@ final class GenerateNewApiController extends AbstractActionController
                 'author' => $input['author'],
                 'currentDate' => new \DateTimeImmutable('now'),
                 'githubIssueNumber' => $input['gitHubIssueNumber'],
+                'parameters' => (new Parser())->parseParameters(explode("\n", str_replace("\r", "", $input['procedureInterface'])))
             ]);
             $this->form->get('clOutput')->setValue($this->renderer->render($clViewModel));
+
+            $tsViewModel = new ViewModel();
+            $tsViewModel->setTemplate('application/templates/ts-api-template.phtml');
+            $tsViewModel->setVariables([
+                'apiRootName' => $input['apiRootName'],
+                'description' => $input['description'],
+                'author' => $input['author'],
+                'currentDate' => new \DateTimeImmutable('now'),
+                'githubIssueNumber' => $input['gitHubIssueNumber'],
+                'parameters' => (new Parser())->parseParameters(explode("\n", str_replace("\r", "", $input['procedureInterface'])))
+            ]);
+            $this->form->get('tsOutput')->setValue($this->renderer->render($tsViewModel));
         }
 
         $viewModel->setVariables([

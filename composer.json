@@ -15,9 +15,9 @@
     },
     "autoload": {
         "psr-4": {
-            "Tools\\": "src",
             "Application\\": "module/Application/src",
-            "Build\\": "module/Build/src"
+            "Build\\": "module/Build/src",
+            "Console\\": "module/Console/src"
         }
     }
 }

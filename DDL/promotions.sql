@@ -1,0 +1,9 @@
+DROP TABLE DEVTOOLS.PROMOTIONS;
+CREATE TABLE DEVTOOLS.PROMOTIONS (
+                                     FROM CHARACTER(500) NOT HIDDEN,
+                                     TO CHARACTER(500) NOT HIDDEN,
+                                     TIMESTAMP TIMESTAMP(6) NOT HIDDEN
+) NOT VOLATILE UNIT ANY KEEP IN MEMORY NO;
+
+LABEL ON TABLE DEVTOOLS.PROMOTIONS IS 'Promotion of source members';
+

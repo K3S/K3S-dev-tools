@@ -1,5 +1,4 @@
 <?php
-declare(strict_types=1);
 
 namespace Application\Controller;
 
@@ -7,7 +6,7 @@ use Interop\Container\ContainerInterface;
 use Laminas\Mvc\Controller\AbstractActionController;
 use Laminas\View\Model\ViewModel;
 
-final class RPGFixedToFreeCommentColumnConverterController extends AbstractActionController
+final class ApplyTextToCompiledObjectsController extends AbstractActionController
 {
     public function __construct()
     {
@@ -22,7 +21,13 @@ final class RPGFixedToFreeCommentColumnConverterController extends AbstractActio
     public function indexAction()
     {
         $viewModel = new ViewModel();
-        $viewModel->setTemplate('application/rpg-fixed-to-free-comment-column-converter.phtml');
+        $viewModel->setTemplate('application/apply-text-to-compiled-objects.phtml');
+
+
+
+
+
+
         return $viewModel;
     }
 }

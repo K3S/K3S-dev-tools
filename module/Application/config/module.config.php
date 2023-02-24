@@ -1,5 +1,6 @@
 <?php
 
+use Application\Controller\ConvertCopyStatementsController;
 use Application\Controller\CopyFromDeploymentToDevelopmentController;
 use Application\Controller\GenerateNewApiController;
 use Application\Controller\GenerateQueryResultDataStructureDefinitionFromQueryController;
@@ -10,11 +11,13 @@ use Application\Controller\GetObjectDependenciesController;
 use Application\Controller\HelpfulLinksController;
 use Application\Controller\IndexController;
 use Application\Controller\MoveGutterCommentsToEndOfLineController;
+use Application\Controller\PromoteSourceController;
 use Application\Controller\RPGFixedToFreeCommentColumnConverterController;
 use Application\Form\GenerateQueryResultDataStructureDefinitionFromQueryForm;
 use Application\Form\GenerateSqlFileForGithubIssueForm;
 use Application\Form\GenerateSqlInsertForm;
 use Application\Service\GetObjectDependenciesService;
+use Application\Table\PromotionsTable;
 use Application\Validator\SourceMemberExistsValidator;
 use Laminas\Db\Adapter\Adapter;
 use Laminas\Db\Adapter\AdapterServiceFactory;
@@ -27,6 +30,7 @@ use ToolkitApi\Toolkit;
 return [
     'controllers' => [
         'factories' => [
+            ConvertCopyStatementsController::class => [ConvertCopyStatementsController::class, 'fromContainer'],
             CopyFromDeploymentToDevelopmentController::class => [CopyFromDeploymentToDevelopmentController::class, 'fromContainer'],
             GenerateNewApiController::class => [GenerateNewApiController::class, 'fromContainer'],
             GenerateQueryResultDataStructureDefinitionFromQueryController::class => [GenerateQueryResultDataStructureDefinitionFromQueryController::class, 'fromContainer'],
@@ -37,6 +41,7 @@ return [
             HelpfulLinksController::class => [HelpfulLinksController::class, 'fromContainer'],
             IndexController::class => [IndexController::class, 'fromContainer'],
             MoveGutterCommentsToEndOfLineController::class => [MoveGutterCommentsToEndOfLineController::class, 'fromContainer'],
+            PromoteSourceController::class => [PromoteSourceController::class, 'fromContainer'],
             RPGFixedToFreeCommentColumnConverterController::class => [RPGFixedToFreeCommentColumnConverterController::class, 'fromContainer'],
         ],
     ],
@@ -159,6 +164,26 @@ return [
                     ],
                 ],
             ],
+            'promote-source' => [
+                'type' => Literal::class,
+                'options' => [
+                    'route' => '/promote-source',
+                    'defaults' => [
+                        'controller' => PromoteSourceController::class,
+                        'action' => 'index',
+                    ],
+                ],
+            ],
+            'convert-copy-statements' => [
+                'type' => Literal::class,
+                'options' => [
+                    'route' => '/convert-copy-statements',
+                    'defaults' => [
+                        'controller' => ConvertCopyStatementsController::class,
+                        'action' => 'index',
+                    ],
+                ],
+            ],
         ],
     ],
     'service_manager' => [
@@ -166,6 +191,7 @@ return [
             Adapter::class => AdapterServiceFactory::class,
             GetObjectDependenciesService::class => [GetObjectDependenciesService::class, 'fromContainer'],
             InputFilterPluginManager::class => InputFilterPluginManagerFactory::class,
+            PromotionsTable::class => [PromotionsTable::class, 'fromContainer'],
             Toolkit::class => IbmiToolkitFactory::class,
         ],
     ],

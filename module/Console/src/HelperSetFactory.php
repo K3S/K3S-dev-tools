@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tools;
+namespace Console;
 
 use Interop\Container\ContainerInterface;
 use Symfony\Component\Console\Helper\HelperSet;

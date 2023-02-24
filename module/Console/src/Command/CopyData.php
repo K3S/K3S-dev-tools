@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tools\Command;
+namespace Console\Command;
 
 use Interop\Container\ContainerInterface;
 use Symfony\Component\Console\Command\Command;
