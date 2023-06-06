@@ -1,0 +1,27 @@
+<?php
+/** @var $title string */
+/** @var $sourceMemberName string */
+/** @var $authors string[] */
+/** @var $githubIssueNumber string */
+/** @var $currentDate DateTimeImmutable */
+/** @var $tableRootName string */
+/** @var $columns array[] */
+?>
+
+STRPGMEXP  PGMLVL(*CURRENT) signature('K<?= $tableRootName ?> Access SRVPGM')
+EXPORT     SYMBOL(<?= $tableRootName ?>_getrecord)
+EXPORT     SYMBOL(<?= $tableRootName ?>_clear)
+<?php
+foreach ($columns as $column) {
+    $columnBaseName = explode('_',$column['COLUMN_NAME'])[1];
+?>
+EXPORT     SYMBOL(<?= $tableRootName ?>_get<?= $column['COLUMN_NAME']?>)
+<?php } ?>
+<?php
+foreach ($columns as $column) {
+    $columnBaseName = explode('_',$column['COLUMN_NAME'])[1];
+    ?>
+    EXPORT     SYMBOL(<?= $tableRootName ?>_set<?= $column['COLUMN_NAME']?>)
+<?php } ?>
+ENDPGMEXP
+

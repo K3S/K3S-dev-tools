@@ -1,0 +1,115 @@
+<?php
+/** @var $title string */
+/** @var $columns array[] */
+/** @var $tableRootName string */
+
+$columnsString = '';
+$count = 0;
+foreach ($columns as $column) {
+    if ($count > 0) {
+        $columnsString .= ', ';
+    }
+    $columnsString .= $column['COLUMN_NAME'];
+    $count++;
+}
+
+$getDefinition = function (array $column) {
+    if ($column['DATA_TYPE'] === 'CHAR') {
+        return "Char(" . $column['LENGTH'] . ")";
+    }
+
+    if ($column['DATA_TYPE'] === 'DATE') {
+        return "Date";
+    }
+
+    if ($column['DATA_TYPE'] === 'DECIMAL') {
+        return "Packed(" . $column['LENGTH'] . ':' . $column['NUMERIC_SCALE'] . ")";
+    }
+
+    if ($column['DATA_TYPE'] === 'BIGINT') {
+        return "Packed(" . $column['LENGTH'] . ':' . $column['NUMERIC_SCALE'] . ")";
+    }
+
+    if ($column['DATA_TYPE'] === 'TIMESTMP') {
+        return "Timestamp";
+    }
+};
+
+$getKeyColumns = function (array $columns) {
+    $resultColumns = [];
+    foreach ($columns as $column) {
+        if ($column['IS_IDENTITY'] === 'YES') {
+            $resultColumns[] = $column;
+        }
+    }
+    return $resultColumns;
+};
+
+$getColumnPrefix = function (array $columns): string
+{
+    $prefix = explode('_', $columns[0]['COLUMN_NAME']);
+    return $prefix[0] . '_';
+};
+
+$keyColumns = $getKeyColumns($columns);
+?>
+**FREE
+Dcl-PR <?= $tableRootName ?>_getrecord Ind;
+<?php foreach ($columns as $column) {
+    if ($column['IS_IDENTITY'] === 'YES') {
+
+//        echo str_replace($getColumnPrefix($columns), 'ID', $column['COLUMN_NAME']) . '    ';
+        echo str_replace(' ', '', $column['COLUMN_TEXT']) . '     ' . $getDefinition($column) . ';' . PHP_EOL;
+    }
+}
+?>
+End-PR;
+
+Dcl-PR <?= $tableRootName ?>_clear;
+End-PR;
+
+<?php
+foreach ($columns as $column) {
+    $columnBaseName = explode('_',$column['COLUMN_NAME'])[1];
+?>
+DCL-PR <?= $tableRootName ?>_get<?= $column['COLUMN_NAME'] ?> <?php echo '    ' . $getDefinition($column) . ';' . PHP_EOL; ?>
+END-PR;
+<?php } ?>
+
+
+<?php
+foreach ($columns as $column) {
+    if ($column['IS_IDENTITY'] === 'YES') {
+        continue;
+    }
+    $columnBaseName = explode('_',$column['COLUMN_NAME'])[1];
+?>
+DCL-PR <?= $tableRootName ?>_set<?= $column['COLUMN_NAME'] ?>;
+    Pm<?php echo $columnBaseName . '    ' . $getDefinition($column) . ' const;' . PHP_EOL; ?>
+END-PR;
+<?php } ?>
+
+Dcl-PR <?= $tableRootName ?>_update Ind;
+<?php foreach ($columns as $column) {
+    if ($column['IS_IDENTITY'] === 'YES') {
+
+//        echo str_replace($getColumnPrefix($columns), 'ID', $column['COLUMN_NAME']) . '    ';
+        echo str_replace(' ', '', $column['COLUMN_TEXT']) . '     ' . $getDefinition($column) . ';' . PHP_EOL;
+    }
+}
+?>
+End-PR;
+
+Dcl-PR <?= $tableRootName ?>_Delete Ind;
+<?php foreach ($columns as $column) {
+    if ($column['IS_IDENTITY'] === 'YES') {
+
+//        echo str_replace($getColumnPrefix($columns), 'ID', $column['COLUMN_NAME']) . '    ';
+        echo str_replace(' ', '', $column['COLUMN_TEXT']) . '     ' . $getDefinition($column) . ';' . PHP_EOL;
+    }
+}
+?>
+End-PR;
+
+Dcl-PR <?= $tableRootName ?>_insert Ind;
+End-PR;

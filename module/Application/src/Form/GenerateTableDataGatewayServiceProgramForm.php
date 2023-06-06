@@ -67,6 +67,20 @@ final class GenerateTableDataGatewayServiceProgramForm extends Form
         ]);
 
         $this->add([
+            'name' => 'binder-signature',
+            'type' => Text::class,
+            'attributes' => [
+                'id' => 'binder-signature',
+                'class' => 'form-contol',
+            ],
+            'options' => [
+                'label_attributes' => [
+                    'class' => 'col-xs-12 col-sm-2 col-md-3 control-label',
+                ],
+            ],
+        ]);
+
+        $this->add([
             'name' => self::CSRF_ELEMENT_NAME,
             'type' => Csrf::class,
         ]);

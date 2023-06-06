@@ -5,11 +5,62 @@
 /** @var $githubIssueNumber string */
 /** @var $currentDate DateTimeImmutable */
 /** @var $tableRootName string */
+/** @var $columns array[] */
+
+$columnsString = '';
+$count = 0;
+foreach ($columns as $column) {
+  if ($count > 0) {
+    $columnsString .= ', ';
+  }
+  $columnsString .= $column['COLUMN_NAME'];
+  $count++;
+}
+
+$getDefinition = function (array $column) {
+  if ($column['DATA_TYPE'] === 'CHAR') {
+    return "Char(" . $column['LENGTH'] . ")";
+  }
+
+  if ($column['DATA_TYPE'] === 'DATE') {
+    return "Date";
+  }
+
+  if ($column['DATA_TYPE'] === 'DECIMAL') {
+    return "Packed(" . $column['LENGTH'] . ':' . $column['NUMERIC_SCALE'] . ")";
+  }
+
+  if ($column['DATA_TYPE'] === 'BIGINT') {
+    return "Packed(" . $column['LENGTH'] . ':' . $column['NUMERIC_SCALE'] . ")";
+  }
+
+  if ($column['DATA_TYPE'] === 'TIMESTMP') {
+    return "Timestamp";
+  }
+};
+
+$getKeyColumns = function (array $columns) {
+  $resultColumns = [];
+  foreach ($columns as $column) {
+    if ($column['IS_IDENTITY'] === 'YES') {
+      $resultColumns[] = $column;
+    }
+  }
+  return $resultColumns;
+};
+
+$getColumnPrefix = function (array $columns): string
+{
+  $prefix = explode('_', $columns[0]['COLUMN_NAME']);
+  return $prefix[0] . '_';
+};
+
+$keyColumns = $getKeyColumns($columns);
 ?>
 
 **FREE
-/TITLE <?= $title ?>
-//---------------------------------------------------------------------
+/TITLE <?= $title . PHP_EOL?>
+// ---------------------------------------------------------------------
 Ctl-Opt copyright('(C) Copyright 1996 - <?= (new DateTime('now'))->format('Y') ?> King III Solutions, Inc.+
 Rel 6.01 2016-01-01   Program Property of King III Solutions, Inc.+
 All rights reserved              +
@@ -17,7 +68,7 @@ K3S_Replenish (R) is a Registered Trade Mark of King III Solutions+
 Inc.');
 Ctl-Opt nomain;
 
-//***************************************************************
+// ***************************************************************
 //
 //   K3S-Replenish (R) - Inventory REPLENISHment System
 //   Copyright (C) 1996-2013 by King III Solutions, Inc.
@@ -26,68 +77,83 @@ Ctl-Opt nomain;
 //   K3S_Replenish (R) is a Registered Trade Mark of
 //   King III Solutions Inc.
 //
-//***************************************************************
-//   Name: <?= $sourceMemberName ?>
+// ***************************************************************
+//   Name: <?= $sourceMemberName . PHP_EOL?>
 //   Type: SQLRPGLE Program
-//   Desc: Web - Update/Delete/Insert into K_<?= $tableRootName ?>
+//   Desc: Web - Update/Delete/Insert into K_<?= $tableRootName . PHP_EOL?>
 //   Auth: <?= $authors[0] ?>
 <?php if (count($authors) > 1)
 {
     foreach ($authors as $author) {
-        echo '           ' . $author . ' ';
+        echo '           ' . $author . PHP_EOL;
     }
 }
 ?>
+
 //
-//****************************************************************
+// ****************************************************************
 //                                                               *
 //   Change ID  Change Date Change Description                   *
 //   ---------  ----------  -------------------------------------*
 //     <?= $githubIssueNumber ?>    <?= $currentDate->format('Y-m-d') ?>  Initially written.                   *
-//***************************************************************
-Dcl-DS MFUBENT  extname('K_MFUBENT') prefix(nw:2);
+// ***************************************************************
+Dcl-DS <?= $tableRootName ?>  extname('K_<?= $tableRootName ?>') prefix(nw:2) Qualified;
 End-DS;
 
 // Prototypes
-/copy MFUBENT_H
+/COPY 'qrpglesrc/<?= $tableRootName ?>_H.rpgle'
 
 // Global Variables
-//
-// Include any Global Variable
 Dcl-C SQLSTATEOK Const('00000');
 
-exec sql
-set option commit = *none,
-datfmt = *iso,
-closqlcsr = *endactgrp;
+exec sql set option commit = *none,
+                    datfmt = *iso,
+                 closqlcsr = *endactgrp;
 
-//--------------------------------------------------------------------
+// --------------------------------------------------------------------
 // Select Record and populate DS
-//--------------------------------------------------------------------
-Dcl-Proc MFUBENT_getrecord Export;
-  Dcl-PI MFUBENT_getrecord Ind;
-    Company        Char(1);
-    Batch          Packed(7:0);
-    Location       Char(5);
-    Supplier       Char(10);
-    SubSupplier    Char(10);
-    Product        Char(25);
+// --------------------------------------------------------------------
+Dcl-Proc <?= $tableRootName ?>_getrecord Export;
+  Dcl-PI <?= $tableRootName ?>_getrecord Ind;
+    <?php foreach ($columns as $column) {
+      if ($column['IS_IDENTITY'] === 'YES') {
+
+        //echo str_replace($getColumnPrefix($columns), 'ID', $column['COLUMN_NAME']) . '    ';
+        echo str_replace(' ', '', $column['COLUMN_TEXT']) . '     ' . $getDefinition($column) . ';' . PHP_EOL;
+      }
+    }
+  ?>
   End-PI;
   Dcl-S isFound      Ind        inz(*off);
 
-  MFUBENT_clear();
+  <?= $tableRootName ?>_clear();
 
   exec sql
-    Select ME_COMP, ME_BATCH, ME_PROCESS, ME_LOCN, ME_SUPL, ME_SUPLSUB, ME_PROD,
-      ME_BIRTH, ME_LASTUPD, ME_BEFORE, ME_AFTER, ME_PROCDAT, ME_REVRDAT, ME_MEMO
-      into :MFUBENT
-    from K_MFUBENT
-    Where ME_COMP = :Company and
-      ME_BATCH = :Batch and
-      ME_LOCN = :Location and
-      ME_SUPL = :Supplier and
-      ME_SUPLSUB = :SubSupplier and
-      ME_PROD = :Product
+    Select
+<?php
+$counter = 0;
+foreach ($columns as $column) {
+  if ($counter > 0) {
+    echo ', ' . PHP_EOL;
+  }
+  echo '      ' . $column['COLUMN_NAME'];
+  $counter++;
+}
+echo PHP_EOL; ?>
+    into :<?= $tableRootName . PHP_EOL?>
+    from K_<?= $tableRootName . PHP_EOL?>
+    Where <?php
+      $counter = 0;
+      foreach ($keyColumns as $keyColumn) {
+        if ($counter > 0) {
+          echo PHP_EOL . " AND ";
+        }
+//        echo $keyColumn['COLUMN_NAME'] . ' = :' . str_replace($getColumnPrefix($columns), 'ID', $keyColumn['COLUMN_NAME']);;
+        echo $keyColumn['COLUMN_NAME'] . ' = :' . str_replace(' ', '', $keyColumn['COLUMN_TEXT']) . PHP_EOL;
+        $counter++;
+      }
+      echo PHP_EOL;
+    ?>
     fetch first row only
     WITH NC;
 
@@ -98,452 +164,217 @@ Dcl-Proc MFUBENT_getrecord Export;
   return isFound;
 End-Proc;
 
-//--------------------------------------------------------------------
+// --------------------------------------------------------------------
 // Clear Data Structure holding Records
-//--------------------------------------------------------------------
-Dcl-Proc MFUBENT_clear Export;
-Dcl-PI MFUBENT_clear;
-End-PI;
+// --------------------------------------------------------------------
+Dcl-Proc <?= $tableRootName ?>_clear Export;
+  Dcl-PI <?= $tableRootName ?>_clear;
+  End-PI;
 
-clear MFUBENT;
-return;
+  clear <?= $tableRootName ?>;
+  return;
 End-Proc;
 
 
-//=====================================================================
+// =====================================================================
 // Getters
-//=====================================================================
+// =====================================================================
 
-//--------------------------------------------------------------------
-// Get value from Company ID
-//--------------------------------------------------------------------
-Dcl-Proc MFUBENT_getME_COMP export;
-Dcl-PI MFUBENT_getME_COMP Char(1);
-End-PI;
+<?php
+foreach ($columns as $column) {
+  $columnBaseName = explode('_',$column['COLUMN_NAME'])[1];
+?>
 
-return nw_COMP;
+// --------------------------------------------------------------------
+// Get value from <?= $column['COLUMN_TEXT'] . PHP_EOL ?>
+// --------------------------------------------------------------------
+Dcl-Proc <?= $tableRootName ?>_get<?= $column['COLUMN_NAME'] ?> export;
+  Dcl-PI <?= $tableRootName ?>_get<?= $column['COLUMN_NAME'] ?> <?php
+    echo $getDefinition($column);
+    echo ";" . PHP_EOL;
+?>
+  End-PI;
+
+  return <?= $tableRootName ?>.nw_<?= $columnBaseName ?>;
 End-Proc;
 
-//--------------------------------------------------------------------
-// Get value from Batch ID
-//--------------------------------------------------------------------
-Dcl-Proc MFUBENT_getME_BATCH export;
-Dcl-PI MFUBENT_getME_BATCH Packed(7:0);
-End-PI;
-
-return nw_BATCH;
-End-Proc;
-
-//--------------------------------------------------------------------
-// Get value from Processed flag
-//--------------------------------------------------------------------
-Dcl-Proc MFUBENT_getME_PROCESS export;
-Dcl-PI MFUBENT_getME_PROCESS Char(1);
-End-PI;
-
-return nw_PROCESS;
-End-Proc;
-
-//--------------------------------------------------------------------
-// Get value from Location ID
-//--------------------------------------------------------------------
-Dcl-Proc MFUBENT_getME_LOCN export;
-Dcl-PI MFUBENT_getME_LOCN Char(5);
-End-PI;
-
-return nw_LOCN;
-End-Proc;
-
-//--------------------------------------------------------------------
-// Get value from Supplier ID
-//--------------------------------------------------------------------
-Dcl-Proc MFUBENT_getME_SUPL export;
-Dcl-PI MFUBENT_getME_SUPL Char(10);
-End-PI;
-
-return nw_SUPL;
-End-Proc;
-
-//--------------------------------------------------------------------
-// Get value from Sub Supplier
-//--------------------------------------------------------------------
-Dcl-Proc MFUBENT_getME_SUPLSUB export;
-Dcl-PI MFUBENT_getME_SUPLSUB Char(10);
-End-PI;
-
-return nw_SUPLSUB;
-End-Proc;
-
-//--------------------------------------------------------------------
-// Get value from Product ID
-//--------------------------------------------------------------------
-Dcl-Proc MFUBENT_getME_PROD export;
-Dcl-PI MFUBENT_getME_PROD CHAR(25);
-End-PI;
-
-return nw_PROD;
-End-Proc;
-
-//--------------------------------------------------------------------
-// Get value from Entry Birth Date
-//--------------------------------------------------------------------
-Dcl-Proc MFUBENT_getME_BIRTH export;
-Dcl-PI MFUBENT_getME_BIRTH Date;
-End-PI;
-
-return nw_BIRTH;
-End-Proc;
-
-//--------------------------------------------------------------------
-// Get value from Entry Last Update
-//--------------------------------------------------------------------
-Dcl-Proc MFUBENT_getME_LASTUPD export;
-Dcl-PI MFUBENT_getME_LASTUPD Date;
-End-PI;
-
-return nw_LASTUPD;
-End-Proc;
-
-//--------------------------------------------------------------------
-// Get value from Value Before Change
-//--------------------------------------------------------------------
-Dcl-Proc MFUBENT_getME_BEFORE export;
-Dcl-PI MFUBENT_getME_BEFORE Char(100);
-End-PI;
-
-return nw_BEFORE;
-End-Proc;
-
-//--------------------------------------------------------------------
-// Get value from Value After Change
-//--------------------------------------------------------------------
-Dcl-Proc MFUBENT_getME_AFTER export;
-Dcl-PI MFUBENT_getME_AFTER Char(100);
-End-PI;
-
-return nw_AFTER;
-End-Proc;
-
-//--------------------------------------------------------------------
-// Get value from Processed Date
-//--------------------------------------------------------------------
-Dcl-Proc MFUBENT_getME_PROCDAT export;
-Dcl-PI MFUBENT_getME_PROCDAT Date;
-End-PI;
-
-return nw_PROCDAT;
-End-Proc;
-
-//--------------------------------------------------------------------
-// Get value from Reversed Date
-//--------------------------------------------------------------------
-Dcl-Proc MFUBENT_getME_REVRDAT export;
-Dcl-PI MFUBENT_getME_REVRDAT Date;
-End-PI;
-
-return nw_REVRDAT;
-End-Proc;
-
-//--------------------------------------------------------------------
-// Get value from Memo
-//--------------------------------------------------------------------
-Dcl-Proc MFUBENT_getME_MEMO export;
-Dcl-PI MFUBENT_getME_MEMO Char(100);
-End-PI;
-
-return nw_MEMO;
-End-Proc;
+<?php
+}
+?>
 
 
-//=====================================================================
+// =====================================================================
 // Setters
-//=====================================================================
+// =====================================================================
 
-//--------------------------------------------------------------------
-// Set value for Company ID
-//--------------------------------------------------------------------
-Dcl-Proc MFUBENT_setME_COMP export;
-Dcl-PI MFUBENT_setME_COMP;
-PmCOMP  Char(1)  const;
-End-PI;
+<?php
+foreach ($columns as $column) {
+  if ($column['IS_IDENTITY'] === 'YES') {
+    continue;
+  }
+  $columnBaseName = explode('_',$column['COLUMN_NAME'])[1];
+?>
+// --------------------------------------------------------------------
+// Set value for <?= $column['COLUMN_TEXT'] . PHP_EOL ?>
+// --------------------------------------------------------------------
+Dcl-Proc <?= $tableRootName ?>_set<?= $column['COLUMN_NAME'] ?> export;
+  Dcl-PI <?= $tableRootName ?>_set<?= $column['COLUMN_NAME'] ?>;
+    Pm<?= $columnBaseName ?>  <?php
+    echo $getDefinition($column);
+  ?>  const;
+  End-PI;
 
-nw_COMP = PmCOMP;
-return;
+  <?= $tableRootName ?>.nw_<?= $columnBaseName ?> = Pm<?= $columnBaseName ?>;
+
+  return;
 End-Proc;
 
-//--------------------------------------------------------------------
-// Set value for Batch ID
-//--------------------------------------------------------------------
-Dcl-Proc MFUBENT_setME_BATCH export;
-Dcl-PI MFUBENT_setME_BATCH;
-PmBATCH  Packed(7:0)  const;
-End-PI;
+<?php
+}
+?>
 
-nw_BATCH = PmBATCH;
-return;
-End-Proc;
 
-//--------------------------------------------------------------------
-// Set value for Processed Flag
-//--------------------------------------------------------------------
-Dcl-Proc MFUBENT_setME_PROCESS export;
-Dcl-PI MFUBENT_setME_PROCESS;
-PmPROCESS  Char(1)  const;
-End-PI;
-
-nw_PROCESS = PmPROCESS;
-return;
-End-Proc;
-
-//--------------------------------------------------------------------
-// Set value for Location ID
-//--------------------------------------------------------------------
-Dcl-Proc MFUBENT_setME_LOCN export;
-Dcl-PI MFUBENT_setME_LOCN;
-PmLOCN  Char(5)  const;
-End-PI;
-
-nw_LOCN = PmLOCN;
-return;
-End-Proc;
-
-//--------------------------------------------------------------------
-// Set value for Supplier ID
-//--------------------------------------------------------------------
-Dcl-Proc MFUBENT_setME_SUPL export;
-Dcl-PI MFUBENT_setME_SUPL;
-PmSUPL  Char(10)  const;
-End-PI;
-
-nw_SUPL = PmSUPL;
-return;
-End-Proc;
-
-//--------------------------------------------------------------------
-// Set value for Sub Supplier
-//--------------------------------------------------------------------
-Dcl-Proc MFUBENT_setME_SUPLSUB export;
-Dcl-PI MFUBENT_setME_SUPLSUB;
-PmSUPLSUB  Char(10)  const;
-End-PI;
-
-nw_SUPLSUB = PmSUPLSUB;
-return;
-End-Proc;
-
-//--------------------------------------------------------------------
-// Set value for Product ID
-//--------------------------------------------------------------------
-Dcl-Proc MFUBENT_setME_PROD export;
-Dcl-PI MFUBENT_setME_PROD;
-PmPROD  Char(25)  const;
-End-PI;
-
-nw_PROD = PmPROD;
-return;
-End-Proc;
-
-//--------------------------------------------------------------------
-// Set value for Entry Birth Date
-//--------------------------------------------------------------------
-Dcl-Proc MFUBENT_setME_BIRTH export;
-Dcl-PI MFUBENT_setME_BIRTH;
-PmBIRTH  Date  const;
-End-PI;
-
-nw_BIRTH = PmBIRTH;
-return;
-End-Proc;
-
-//--------------------------------------------------------------------
-// Set value for Entry Last Updated
-//--------------------------------------------------------------------
-Dcl-Proc MFUBENT_setME_LASTUPD export;
-Dcl-PI MFUBENT_setME_LASTUPD;
-PmLASTUPD  Date  const;
-End-PI;
-
-nw_LASTUPD = PmLASTUPD;
-return;
-End-Proc;
-
-//--------------------------------------------------------------------
-// Set value for Value Before Change
-//--------------------------------------------------------------------
-Dcl-Proc MFUBENT_setME_BEFORE export;
-Dcl-PI MFUBENT_setME_BEFORE;
-PmBEFORE  Char(100)  const;
-End-PI;
-
-nw_BEFORE = PmBEFORE;
-return;
-End-Proc;
-
-//--------------------------------------------------------------------
-// Set value for Value After Change
-//--------------------------------------------------------------------
-Dcl-Proc MFUBENT_setME_AFTER export;
-Dcl-PI MFUBENT_setME_AFTER;
-PmAFTER  Char(100)  const;
-End-PI;
-
-nw_AFTER = PmAFTER;
-return;
-End-Proc;
-
-//--------------------------------------------------------------------
-// Set value for Processed Date
-//--------------------------------------------------------------------
-Dcl-Proc MFUBENT_setME_PROCDAT export;
-Dcl-PI MFUBENT_setME_PROCDAT;
-PmPROCDAT  Date  const;
-End-PI;
-
-nw_PROCDAT = PmPROCDAT;
-return;
-End-Proc;
-
-//--------------------------------------------------------------------
-// Set value for Reversed Date
-//--------------------------------------------------------------------
-Dcl-Proc MFUBENT_setME_REVRDAT export;
-Dcl-PI MFUBENT_setME_REVRDAT;
-PmREVRDAT  Date  const;
-End-PI;
-
-nw_REVRDAT = PmREVRDAT;
-return;
-End-Proc;
-
-//--------------------------------------------------------------------
-// Set value for Memo
-//--------------------------------------------------------------------
-Dcl-Proc MFUBENT_setME_MEMO export;
-Dcl-PI MFUBENT_setME_MEMO;
-PmMEMO  Char(100)  const;
-End-PI;
-
-nw_MEMO = PmMEMO;
-return;
-End-Proc;
-
-//====================================================================
+// ====================================================================
 // Database functions
-//====================================================================
+// ====================================================================
 
-//--------------------------------------------------------------------
+// --------------------------------------------------------------------
 // Update record with values from DS
-//--------------------------------------------------------------------
-Dcl-Proc MFUBENT_update Export;
-Dcl-PI MFUBENT_update Ind;
-Company        Char(1);
-Batch          Packed(7:0);
-Location       Char(5);
-Supplier       Char(10);
-SubSupplier    Char(10);
-Product        Char(25);
-End-PI;
-Dcl-S isUpdated    Ind        inz(*off);
+// --------------------------------------------------------------------
+Dcl-Proc <?= $tableRootName ?>_update Export;
+  Dcl-PI <?= $tableRootName ?>_update Ind;
+<?php foreach ($columns as $column) {
+  if ($column['IS_IDENTITY'] === 'YES') {
+//    echo '    ' . str_replace($getColumnPrefix($columns), 'ID', $column['COLUMN_NAME']) . '    ';
+    echo '    ' . str_replace(' ', '', $column['COLUMN_TEXT']) . '     ' . $getDefinition($column) . ';' . PHP_EOL;
+  }
+}
+?>
+  End-PI;
+  Dcl-S isUpdated    Ind        inz(*off);
 
-exec sql
-update K_MFUBENT
-set
-ME_COMP = :nw_COMP, ME_BATCH = :nw_BATCH, ME_PROCESS = :nw_PROCESS, ME_LOCN = :nw_LOCN,
-ME_SUPL = :nw_SUPL, ME_SUPLSUB = :nw_SUPLSUB, ME_PROD = :nw_PROD, ME_BIRTH = :nw_BIRTH,
-ME_LASTUPD = :nw_LASTUPD, ME_BEFORE = :nw_BEFORE, ME_AFTER = :nw_AFTER,
-ME_PROCDAT = :nw_PROCDAT, ME_REVRDAT = :nw_REVRDAT, ME_MEMO = :nw_MEMO
-Where ME_COMP = :Company and
-ME_LOCN = :Location and
-ME_BATCH = :Batch and
-ME_SUPL = :Supplier and
-ME_SUPLSUB = :SubSupplier and
-ME_PROD = :Product
-WITH NC;
+  exec sql
+    update K_<?= $tableRootName . PHP_EOL?>
+    set <?php
+echo PHP_EOL;
+$count = 0;
+foreach ($columns as $column) {
+  if ($column['IS_IDENTITY'] === 'YES') {
+    continue;
+  }
+  if ($count > 0) {
+    echo ', ' . PHP_EOL;
+  }
+  $columnBaseName = explode('_',$column['COLUMN_NAME'])[1];
 
-if (SQLState = SQLSTATEOK);
-isUpdated = *on;
-endif;
+  echo "      " . $column['COLUMN_NAME'] . ' = :' . $tableRootName . '.nw_' . $columnBaseName;
+  $count++;
+} ?>
 
-return isUpdated;
+    Where <?php
+$counter = 0;
+foreach ($keyColumns as $keyColumn) {
+  if ($counter > 0) {
+    echo PHP_EOL . " AND ";
+  }
+//  echo $keyColumn['COLUMN_NAME'] . ' = :' . str_replace($getColumnPrefix($columns), 'ID', $keyColumn['COLUMN_NAME']);
+  echo $keyColumn['COLUMN_NAME'] . ' = :' . str_replace(' ', '', $keyColumn['COLUMN_TEXT']) . '     ' . PHP_EOL;
+  $counter++;
+}
+echo PHP_EOL;
+?>
+    WITH NC;
+
+  if (SQLState = SQLSTATEOK);
+    isUpdated = *on;
+  endif;
+
+  return isUpdated;
 End-Proc;
 
-//--------------------------------------------------------------------
+// --------------------------------------------------------------------
 // Delete record
-//--------------------------------------------------------------------
-Dcl-Proc MFUBENT_Delete Export;
-Dcl-PI MFUBENT_Delete Ind;
-Company        Char(1);
-Batch          Packed(7:0);
-Location       Char(5);
-Supplier       Char(10);
-SubSupplier    Char(10);
-Product        Char(25);
-End-PI;
-Dcl-S isDeleted    Ind        inz(*off);
+// --------------------------------------------------------------------
+Dcl-Proc <?= $tableRootName ?>_Delete Export;
+  Dcl-PI <?= $tableRootName ?>_Delete Ind;
+<?php foreach ($columns as $column) {
+  if ($column['IS_IDENTITY'] === 'YES') {
+    //echo '    ' . str_replace($getColumnPrefix($columns), 'ID', $column['COLUMN_NAME']) . '    ';
+    echo '    ' . str_replace(' ', '', $column['COLUMN_TEXT']) . '     ' . $getDefinition($column) . ';' . PHP_EOL;
+  }
+}
+?>
+  End-PI;
+  Dcl-S isDeleted    Ind        inz(*off);
 
-exec sql
-Delete from K_MFUBENT
-Where ME_COMP = :Company and
-ME_LOCN = :Location and
-ME_BATCH = :Batch and
-ME_SUPL = :Supplier and
-ME_SUPLSUB = :SubSupplier and
-ME_PROD = :Product
-WITH NC;
+  exec sql
+    Delete from K_<?= $tableRootName ?>
+    Where <?php
+$counter = 0;
+foreach ($keyColumns as $keyColumn) {
+  if ($counter > 0) {
+    echo PHP_EOL . " AND ";
+  }
+  echo $keyColumn['COLUMN_NAME'] . ' = :' . str_replace(' ', '', $keyColumn['COLUMN_TEXT']) . PHP_EOL;
+  $counter++;
+}
+echo PHP_EOL;
+?>
+    WITH NC;
 
-if (SQLState = SQLSTATEOK);
-isDeleted = *on;
-endif;
+  if (SQLState = SQLSTATEOK);
+    isDeleted = *on;
+  endif;
 
-return isDeleted;
+  return isDeleted;
 End-Proc;
 
 
-//--------------------------------------------------------------------
-// Delete All Entries for a Batch
-//--------------------------------------------------------------------
-Dcl-Proc MFUBENT_Delete_Batch_Entries Export;
-Dcl-PI MFUBENT_Delete_Batch_Entries Ind;
-Company        Char(1);
-Batch          Packed(7:0);
-End-PI;
-Dcl-S isDeleted    Ind        inz(*off);
 
-exec sql
-Delete from K_MFUBENT
-Where ME_COMP = :Company and
-ME_BATCH = :Batch
-WITH NC;
-
-if (SQLState = SQLSTATEOK);
-isDeleted = *on;
-endif;
-
-return isDeleted;
-End-Proc;
-
-
-//--------------------------------------------------------------------
+// --------------------------------------------------------------------
 // Insert new record with values from DS
-//--------------------------------------------------------------------
-Dcl-Proc MFUBENT_insert Export;
-Dcl-PI MFUBENT_insert Ind;
-End-PI;
-Dcl-S isWritten    Ind        inz(*off);
+// --------------------------------------------------------------------
+Dcl-Proc <?= $tableRootName ?>_insert Export;
+  Dcl-PI <?= $tableRootName ?>_insert Ind;
+  End-PI;
+  Dcl-S isWritten    Ind        inz(*off);
 
-exec sql
-insert into K_MFUBENT(
-ME_COMP, ME_BATCH, ME_PROCESS, ME_LOCN, ME_SUPL, ME_SUPLSUB, ME_PROD, ME_BIRTH, ME_LASTUPD,
-ME_BEFORE, ME_AFTER, ME_PROCDAT, ME_REVRDAT, ME_MEMO
-) values (
-:nw_COMP, :nw_BATCH, :nw_PROCESS, :nw_LOCN, :nw_SUPL, :nw_SUPLSUB, :nw_PROD, :nw_BIRTH,
-:nw_LASTUPD, :nw_BEFORE, :nw_AFTER, :nw_PROCDAT, :nw_REVRDAT, :nw_MEMO
+  exec sql
+    insert into K_<?= $tableRootName ?>(
+<?php
+$counter = 0;
+foreach ($columns as $column) {
+  if ($column['IDENTITY_GENERATION'] === 'ALWAYS') {
+    continue;
+  }
+  if ($counter > 0) {
+    echo ", " . PHP_EOL;
+  }
+  echo "      " . $column['COLUMN_NAME'];
+  $counter++;
+}
+echo PHP_EOL?>
+    ) values (
+<?php
+$count = 0;
+foreach ($columns as $column) {
+  if ($column['IDENTITY_GENERATION'] === 'ALWAYS') {
+    continue;
+  }
+  if ($count > 0) {
+    echo ', ' . PHP_EOL;
+  }
+  $columnBaseName = explode('_',$column['COLUMN_NAME'])[1];
+  echo '      :' . $tableRootName . '.nw_' . $columnBaseName;
+  $count++;
+}
+?>
 )
-WITH NC;
+  WITH NC;
 
-if (SQLState = SQLSTATEOK);
-isWritten = *on;
-endif;
+  if (SQLState = SQLSTATEOK);
+    isWritten = *on;
+  endif;
 
-return isWritten;
+  return isWritten;
 End-Proc;

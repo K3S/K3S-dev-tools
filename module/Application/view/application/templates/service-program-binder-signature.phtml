@@ -1,0 +1,20 @@
+<?php
+/** @var $title string */
+/** @var $columns array[] */
+/** @var $tableRootName string */
+?>
+STRPGMEXP  PGMLVL(*CURRENT) signature('<?= $title ?>')
+    EXPORT     SYMBOL(<?= strtolower($tableRootName) ?>_getrecord)
+    EXPORT     SYMBOL(<?= strtolower($tableRootName) ?>_clear)
+    EXPORT     SYMBOL(<?= strtolower($tableRootName) ?>_update)
+    EXPORT     SYMBOL(<?= strtolower($tableRootName) ?>_insert)
+<?php foreach ($columns as $column) { ?>
+    EXPORT     SYMBOL(<?= strtolower($tableRootName) ?>_get<?= $column['COLUMN_NAME'] ?>)
+<?php } ?>
+<?php foreach ($columns as $column) {
+    if ($column['IS_IDENTITY'] === 'YES') {
+    continue;
+    } ?>
+    EXPORT     SYMBOL(<?= strtolower($tableRootName) ?>_set<?= $column['COLUMN_NAME'] ?>)
+<?php } ?>
+ENDPGMEXP

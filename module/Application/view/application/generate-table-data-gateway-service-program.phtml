@@ -2,9 +2,46 @@
 
 /** @var \Laminas\Form\Form $form */
 
-$form->init();
 
-echo $this->form($form);
+$form->setAttributes([
+    'method' => 'POST',
+    'action' => '/generate-table-data-gateway-service-program',
+]);
+
+$form->prepare();
+
+// Render the opening tag
+echo $this->form()->openTag($form);
+
+
+echo $this->partial('form-element', [
+        'element' => $form->get('library'),
+        'widths' => 'col-sm-7 col-md-9']
+);
+
+echo $this->partial('form-element', [
+        'element' => $form->get('table_name'),
+        'widths' => 'col-sm-7 col-md-9']
+);
+
+echo $this->formSubmit($form->get('submit'));
+
+echo $this->partial('form-element', [
+        'element' => $form->get('serviceProgram'),
+        'widths' => 'col-sm-7 col-md-9']
+);
+
+echo $this->partial('form-element', [
+        'element' => $form->get('binderSignature'),
+        'widths' => 'col-sm-7 col-md-9']
+);
+
+echo $this->partial('form-element', [
+        'element' => $form->get('prototypeDefinitions'),
+        'widths' => 'col-sm-7 col-md-9']
+);
+
+// Render the closing tag
+echo $this->form()->closeTag();
 ?>
-
 

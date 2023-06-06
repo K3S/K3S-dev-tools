@@ -4,13 +4,17 @@ namespace Application\Controller;
 
 use Application\Form\GenerateTableDataGatewayServiceProgramForm;
 use Interop\Container\ContainerInterface;
+use Laminas\Db\Adapter\Adapter;
+use Laminas\Db\Adapter\AdapterInterface;
 use Laminas\Form\Element\Csrf;
 use Laminas\Form\Element\Submit;
 use Laminas\Form\Element\Text;
 use Laminas\Form\Element\Textarea;
+use Laminas\Form\Factory;
 use Laminas\Form\Form;
 use Laminas\Form\FormElementManager;
 use Laminas\Form\FormInterface;
+use Laminas\Hydrator\ArraySerializableHydrator;
 use Laminas\Mvc\Controller\AbstractActionController;
 use Laminas\View\Model\ViewModel;
 use Laminas\View\Renderer\PhpRenderer;
@@ -24,40 +28,100 @@ final class GenerateTableDataGatewayServiceProgramController extends AbstractAct
 //    private ToolkitInterface $toolkit;
     private RendererInterface $renderer;
 
+    /** @var AdapterInterface|Adapter */
+    private AdapterInterface $adapter;
+
     /**
      * @param FormInterface $generateTableDataGatewayServiceProgramForm
      * @param RendererInterface $renderer
+     * @param AdapterInterface|Adapter $adapter
      */
-    public function __construct(FormInterface $generateTableDataGatewayServiceProgramForm, RendererInterface $renderer)
-    {
+    public function __construct(
+        FormInterface $generateTableDataGatewayServiceProgramForm,
+        RendererInterface $renderer,
+        AdapterInterface $adapter
+    ) {
         $this->form = $generateTableDataGatewayServiceProgramForm;
 //        $this->toolkit = $toolkit;
 
         $this->renderer = $renderer;
 
-        $form = new Form();
-        $form->setAttribute('class', 'form');
-        $form->setAttribute('method', 'POST');
+        $this->form = (new Factory())->createForm([
+            'hydrator' => ArraySerializableHydrator::class,
+            'elements' => [
+                [
+                    'spec' => [
+                        'type' => Text::class,
+                        'name' => 'library',
+                        'options' => [
+                            'label' => 'Library',
+                        ],
+                    ],
+                ],
+                [
+                    'spec' => [
+                        'type' => Text::class,
+                        'name' => 'table_name',
+                        'options' => [
+                            'label' => 'Table',
+                        ],
+                    ],
+                ],
+                [
+                    'spec' => [
+                        'type' => Submit::class,
+                        'name' => 'submit',
+                        'attributes' => [
+                            'value' => 'Submit',
+                        ],
+                    ],
+                ],
+                [
+                    'spec' => [
+                        'type' => Textarea::class,
+                        'name' => 'serviceProgram',
+                        'options' => [
+                            'label' => 'Service Program',
+                        ],
+                        'attributes' => [
+                            'rows' => '30',
+                            'class' => 'form-control',
+                            'style' => 'width:100%; font-family: monospace, monospace; white-space: pre-wrap; font-size: .85em; height:20em',
+                        ],
+                    ],
+                ],
+                [
+                    'spec' => [
+                        'type' => Textarea::class,
+                        'name' => 'binderSignature',
+                        'options' => [
+                            'label' => 'Binder Signature',
+                        ],
+                        'attributes' => [
+                            'rows' => '30',
+                            'class' => 'form-control',
+                            'style' => 'width:100%; font-family: monospace, monospace; white-space: pre-wrap; font-size: .85em; height:20em',
+                        ],
+                    ],
+                ],
+                [
+                    'spec' => [
+                        'type' => Textarea::class,
+                        'name' => 'prototypeDefinitions',
+                        'options' => [
+                            'label' => 'Prototype Definition',
+                        ],
+                        'attributes' => [
+                            'rows' => '30',
+                            'class' => 'form-control',
+                            'style' => 'width:100%; font-family: monospace, monospace; white-space: pre-wrap; font-size: .85em; height:20em',
+                        ],
+                    ],
+                ],
+            ]
+        ]);
 
-        $library = new Text('library');
-        $form->add($library);
-        $tableName = new Text('table_name');
-        $form->add($tableName);
-
-        $submit = new Submit('submit');
-        $submit->setValue('Submit');
-        $form->add($submit);
-        $csrf = new Csrf('generate_table_data_gateway_service_program_csrf');
-        $form->add($csrf);
-
-        $result = new Textarea('result');
-        $result->setAttribute('cols', '150');
-        $result->setAttribute('rows', '25000');
-        $result->setAttribute('style', 'font-family: monospace, monospace; white-space: pre-wrap; height: 100vh');
-        $form->add($result);
-
-        $this->form = $form;
-
+        $this->adapter = $adapter;
     }
 
     /**
@@ -68,7 +132,8 @@ final class GenerateTableDataGatewayServiceProgramController extends AbstractAct
     {
         return new self(
             $container->get(FormElementManager::class)->get(GenerateTableDataGatewayServiceProgramForm::class),
-            $container->get(PhpRenderer::class)
+            $container->get(PhpRenderer::class),
+            $container->get(Adapter::class)
 //            $container->get(Toolkit::class)
         );
     }
@@ -89,6 +154,16 @@ final class GenerateTableDataGatewayServiceProgramController extends AbstractAct
             }
 
             $tableRootName = trim($this->params()->fromPost('table_name'), 'K_');
+            $libraryName = $this->params()->fromPost('library');
+
+            $columns = $this->adapter->query(
+                'SELECT * FROM QSYS2.SYSCOLUMNS WHERE TABLE_NAME=? and TABLE_SCHEMA=?',
+                [
+                    'K_' . $tableRootName,
+                    $libraryName
+                ]
+            )->toArray();
+
 
             $resultViewModel = new ViewModel();
             $resultViewModel->setTemplate('application/templates/service-program-template.phtml');
@@ -101,8 +176,28 @@ final class GenerateTableDataGatewayServiceProgramController extends AbstractAct
                 'tableRootName' => $tableRootName,
                 'githubIssueNumber' => 'GH835',
                 'currentDate' => new \DateTimeImmutable('now'),
+                'columns' => $columns
             ]);
-            $this->form->get('result')->setValue($this->renderer->render($resultViewModel));
+
+            $binderViewModel = new ViewModel();
+            $binderViewModel->setTemplate('application/templates/service-program-binder-signature.phtml');
+            $binderViewModel->setVariables([
+                'title' => 'This is the title',
+                'columns' => $columns,
+                'tableRootName' => $tableRootName,
+            ]);
+
+            $prototypeDefinitionsModel = new ViewModel();
+            $prototypeDefinitionsModel->setTemplate('application/templates/prototype-definitions.phtml');
+            $prototypeDefinitionsModel->setVariables([
+                'title' => 'This is the title',
+                'columns' => $columns,
+                'tableRootName' => $tableRootName,
+            ]);
+
+            $this->form->get('serviceProgram')->setValue($this->renderer->render($resultViewModel));
+            $this->form->get('binderSignature')->setValue($this->renderer->render($binderViewModel));
+            $this->form->get('prototypeDefinitions')->setValue($this->renderer->render($prototypeDefinitionsModel));
         }
 
 

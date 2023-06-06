@@ -69,17 +69,7 @@ foreach ($parameters as $parameter) {
     echo substr($spaces, strlen($parameter['description']), (61-strlen($parameter['description'])));
     echo "*/" . "\n";  // 61 chars between asterisks
     echo "DCL      ";
-    echo "VAR(&" . strtoupper($parameter['parameterName']) . ") TYPE(";
-    if (str_contains($parameter['dataType'], 'Char')) {
-        echo "*CHAR";
-    } else {
-        echo "*DEC";
-    }
-    echo ") ";
-
-    echo "LEN(";
-    echo $parameter['length'] . ' ' . $parameter['precision'];
-    echo ")";
+    echo $parameter['clDefinition'];
     echo "\n\n";
 
     $count++;
@@ -101,10 +91,13 @@ foreach ($parameters as $parameter) {
     if ($parameter['parameterName'] === 'k3sobj') {
         continue;
     }
+    if ($count > 0) {
+        echo ' ';
+    }
     if (($count > 0) && ($count % 5 == 0)) {
         echo "+\n                ";
     }
-    echo "&" . strtoupper($parameter['parameterName']) . ' ';
+    echo "&" . strtoupper($parameter['parameterName']);
     $count++;
 } ?>)
 

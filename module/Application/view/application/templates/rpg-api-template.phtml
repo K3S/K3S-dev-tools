@@ -74,7 +74,7 @@ Dcl-PI AR_<?= $apiRootName ?>;
         continue;
     }
     echo '  ' . $parameter['parameterName'] . substr('            ', 0, (2 + (10 - strlen($parameter['parameterName'])))) .
-        $parameter['dataType'] . substr('                    ', 0, (2 + (20 - strlen($parameter['dataType'])))) .
+        ucwords($parameter['rpgDefinition']) . ';' . substr('                    ', 0, (2 + (20 - strlen($parameter['rpgDefinition'])))) .
         '// ' . $parameter['description'] . "\n";
  } ?>
 <?php } ?>
@@ -175,7 +175,7 @@ return;
 // -----------------------------------------------------------------
 begsr $_bld_mbrs;
 
-  wk_bodypgm = %subst(Pgmds.Pgm_Lib:1:3);
+  wk_bodypgm = %subst(PgmDs.Pgm_Lib:1:3);
   wk_codetyp = 'BBK';
   wk_codeval = 'RELEASE   LEVEL ';
   wkfound = tablcod_getrecord(comp:wk_codetyp:wk_codeval);
